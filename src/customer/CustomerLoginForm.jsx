@@ -38,9 +38,9 @@ const CustomerLoginForm = () => {
       if (res.ok && result.token) {
         console.log("Token:", result.token);
         localStorage.setItem('token', result.token);
-        localStorage.setItem('userEmail', formData.email);
-        setMessage("Login successful! Welcome back! 🎉");
-        // navigate('/customer-dashboard');
+        localStorage.setItem('userEmail', formData.email); // Store email for profile fetching
+        setMessage("Login successful!");
+        navigate('/customer-home'); // Change to your customer dashboard route
       } else {
         setMessage(result.message || "Oops! Login failed. Try again?");
       }

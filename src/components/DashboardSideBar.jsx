@@ -39,6 +39,7 @@ const DriverDashboardSidebar = ({ onLogout }) => {
         <FaSignOutAlt />
         Logout
       </button>
+
     </div>
   );
 };
