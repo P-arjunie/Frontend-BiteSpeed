@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
+import { db } from '../firebase';
+import { doc, setDoc } from 'firebase/firestore';
+
 
 const containerStyle = {
   width: '100%',
@@ -18,13 +21,17 @@ const FindOrders = () => {
   const [driverError, setDriverError] = useState('');
   const navigate = useNavigate();
 
+  const [vehicle, setVehicle] = useState(null);
+const [vehicleError, setError] = useState('');
+
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: 'AIzaSyBoJXxxWOMKdexaiud8ImxzzkaHtEIYtds',
   });
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.post('https://assigns-delivery.onrender.com/api/get-nearby-orders');
+      const res = await axios.post('https://assigns-delivery.onrender.com/api/orders/get-nearby-orders');
       if (res.data.orders) {
         setOrders(res.data.orders);
         setMessage('');
@@ -37,6 +44,27 @@ const FindOrders = () => {
       setLoading(false);
     }
   };
+
+  const fetchVehicle = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('https://driver-service-3k84.onrender.com/api/drivers/vehicle/my-vehicles', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      const data = await res.json();
+      if (res.ok && data.length > 0) {
+        setVehicle(data[0]); // Get only the first vehicle
+      } else {
+        setError(data.message || 'No vehicles found.');
+      }
+    } catch (err) {
+      setError('Error fetching vehicle.');
+    }
+  };
+  
 
   const fetchDriverProfile = async () => {
     try {
@@ -61,7 +89,8 @@ const FindOrders = () => {
 
   useEffect(() => {
     fetchDriverProfile();
-
+    fetchVehicle();
+fetchOrders();
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -84,7 +113,7 @@ const FindOrders = () => {
       setLocationError('Geolocation is not supported by your browser.');
     }
 
-    fetchOrders();
+    
   }, []);
 
   const handleGetOrder = async (orderId) => {
@@ -92,8 +121,39 @@ const FindOrders = () => {
       setMessage('Driver profile not loaded.');
       return;
     }
+    if (!vehicle) {
+      setMessage('Vehicle not loaded.');
+      return;
+    }
 
     try {
+
+      // Step 1: Save assignment to AssignOrders backend
+
+      console.log('Assigning Order:', {
+        orderId: orderId,
+        driverName: driver.name,
+        driverId: driver._id,
+        driverLocation: {
+          latitude: location.lat,
+          longitude: location.lng,
+        },
+        vehicleNumber: vehicle.number, // <-- Now using fetched vehicle
+        contactNumber: driver.phone, // assuming driver profile has this
+      });
+      await setDoc(doc(db, 'assignedOrders', orderId), {
+        orderId: orderId,
+        driverName: driver.name,
+        driverId: driver._id,
+        driverLocation: {
+          latitude: location.lat,
+          longitude: location.lng,
+        },
+        vehicleNumber: vehicle.number,
+        contactNumber: driver.phone,
+        assignedAt: new Date(), // optional
+      });
+      
       // Step 1: Assign the driver
       await axios.patch(
         `https://ordermanagementservice.onrender.com/api/orders/${orderId}/assign-driver`,
@@ -184,7 +244,7 @@ const FindOrders = () => {
                 <span className="font-semibold">Order ID:</span> {order._id}
               </p>
               <p className="text-sm text-gray-700">
-                <span className="font-semibold">Restaurant:</span> {order.resturantId}
+                <span className="font-semibold">Restaurant Location:</span> {order.resturantLocation}
               </p>
             </div>
 
@@ -193,7 +253,7 @@ const FindOrders = () => {
                 <span className="font-semibold">Customer:</span> {order.customerName}
               </p>
               <p className="text-sm text-gray-700">
-                <span className="font-semibold">Status:</span> {order.status}
+                <span className="font-semibold">Customer Location:</span> {order.userLocation}
               </p>
             </div>
 

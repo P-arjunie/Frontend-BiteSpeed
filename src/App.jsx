@@ -1,6 +1,6 @@
 
 import AdminDashboard from './admin/OrdersChart'
-
+import CustomerOrderTracking from './customer/CustomerOrderTrcking'
 import CustomerLoginForm from './customer/CustomerLoginForm'
 import CustomerRegisterForm from './customer/CustomerRegisterForm'
 import CustomerProfile from './customer/CustomerProfile'
@@ -65,7 +65,7 @@ function App() {
         <Route path="/customer-profile" element={<CustomerProfile />} />
         <Route path="/customer-home" element={<CustomerHome />} />
         <Route path="/restaurant/:id" element={<ViewMenu />} />
-
+        <Route path="/customer-order_tracking" element={<CustomerOrderTracking />} />
         {/* Route for restaurant */}
         <Route path="/register-restaurant" element={<RestaurantRegister />} />
 
