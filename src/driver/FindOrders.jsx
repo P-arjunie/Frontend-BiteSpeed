@@ -10,6 +10,24 @@ const containerStyle = {
   height: '350px',
 };
 
+// Function to calculate distance between two points using Haversine formula
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2); 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  const distance = R * c; // Distance in km
+  return distance;
+};
+
+const deg2rad = (deg) => {
+  return deg * (Math.PI/180);
+};
+
 const FindOrders = () => {
   const [location, setLocation] = useState(null);
   const [locationError, setLocationError] = useState('');
@@ -186,14 +204,30 @@ const FindOrders = () => {
     ? orders 
     : activeTab === 'nearby' 
       ? orders.filter(order => {
-          // This is a placeholder for actual distance calculation
-          // You would implement actual distance logic here
-          return true; // For now show all as nearby
+          // Check if both restaurant coordinates and driver location are available
+          if (!location || !order.resturantDistance || !order.resturantDistance.coordinates) {
+            return false;
+          }
+          
+          // Extract restaurant coordinates
+          const restaurantLat = order.resturantDistance.coordinates[1]; // Latitude
+          const restaurantLng = order.resturantDistance.coordinates[0]; // Longitude
+          
+          // Calculate distance between driver and restaurant
+          const distance = calculateDistance(
+            location.lat,
+            location.lng,
+            restaurantLat,
+            restaurantLng
+          );
+          
+          // Return true if restaurant is within 10km radius
+          return distance <= 10;
         })
       : orders.filter(order => {
-          // Filter for high value orders
-          // Implement your filtering logic
-          return true; // For now show all as high value
+          // Filter for high value orders (for example, orders with higher earnings)
+          // Assuming orders with earnings above $15 are high value
+          return order.earnings && parseFloat(order.earnings.replace('$', '')) > 15;
         });
 
   if (loading) {
@@ -261,14 +295,36 @@ const FindOrders = () => {
                   scaledSize: new window.google.maps.Size(40, 40),
                 }}
               />
+              
+              {/* Show nearby restaurant markers when "nearby" tab is active */}
+              {activeTab === 'nearby' && filteredOrders.map((order, index) => (
+                order.resturantDistance && order.resturantDistance.coordinates && (
+                  <Marker
+                    key={`restaurant-${index}`}
+                    position={{
+                      lat: order.resturantDistance.coordinates[1],
+                      lng: order.resturantDistance.coordinates[0]
+                    }}
+                    icon={{
+                      url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                      scaledSize: new window.google.maps.Size(30, 30),
+                    }}
+                  />
+                )
+              ))}
             </GoogleMap>
-            <div className="bg-white p-3 flex items-center justify-center">
+            <div className="bg-white p-3 flex items-center justify-between">
               <div className="flex items-center text-orange-600">
                 <span className="text-xl mr-2">📍</span>
                 <span className="text-sm">Your location: {location.lat.toFixed(4)}, {location.lng.toFixed(4)}</span>
               </div>
+              {activeTab === 'nearby' && (
+                <div className="text-sm text-gray-600">
+                  Showing orders within 10km
+                </div>
+              )}
               <button 
-                className="ml-4 bg-orange-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-orange-600 flex items-center"
+                className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-orange-600 flex items-center"
                 onClick={() => fetchOrders()}
               >
                 <span className="mr-1">🔄</span>
@@ -304,7 +360,7 @@ const FindOrders = () => {
           className={`flex-1 py-2 text-center font-medium ${activeTab === 'nearby' ? 'bg-orange-500 text-white' : 'bg-white text-orange-500 border-t border-b border-gray-200'}`}
           onClick={() => setActiveTab('nearby')}
         >
-          Nearby
+          Nearby (10km)
         </button>
         <button 
           className={`flex-1 py-2 text-center rounded-tr-lg rounded-br-lg font-medium ${activeTab === 'value' ? 'bg-orange-500 text-white' : 'bg-white text-orange-500 border-t border-r border-b border-gray-200'}`}
@@ -319,61 +375,84 @@ const FindOrders = () => {
         {filteredOrders.length === 0 ? (
           <div className="bg-white rounded-xl p-8 text-center shadow-md">
             <div className="text-5xl mb-4">🔍</div>
-            <p className="text-gray-600">No orders available right now. Check back soon!</p>
+            <p className="text-gray-600">
+              {activeTab === 'nearby' 
+                ? 'No orders found within 10km radius. Try expanding your search.' 
+                : activeTab === 'value'
+                  ? 'No high value orders available right now. Check back soon!'
+                  : 'No orders available right now. Check back soon!'}
+            </p>
           </div>
         ) : (
           <div className="space-y-4 pb-20">
-            {filteredOrders.map((order, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-xl p-4 shadow-md border-l-4 border-orange-500 hover:shadow-lg transition-shadow"
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <p className="font-bold text-gray-800">{order.customerName}</p>
-                    <p className="text-xs text-gray-500">Order ID: {order._id.substring(0, 10)}...</p>
-                  </div>
-                  {order.status !== 'Driver Get' && (
-                    <button
-                      onClick={() => handleGetOrder(order._id)}
-                      className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors flex items-center"
-                    >
-                      <span className="mr-1">🚚</span>
-                      Accept Order
-                    </button>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-orange-50 rounded-lg p-3">
-                    <p className="text-xs font-medium text-orange-600">PICKUP</p>
-                    <p className="text-sm font-medium mt-1 flex items-center">
-                      <span className="text-lg mr-1">🍽️</span>
-                      {order.resturantLocation}
-                    </p>
+            {filteredOrders.map((order, index) => {
+              // Calculate distance if we're showing nearby tab and have coordinates
+              let distanceText = '';
+              if (activeTab === 'nearby' && location && order.resturantDistance && order.resturantDistance.coordinates) {
+                const distance = calculateDistance(
+                  location.lat,
+                  location.lng,
+                  order.resturantDistance.coordinates[1],
+                  order.resturantDistance.coordinates[0]
+                );
+                distanceText = `${distance.toFixed(1)} km away`;
+              }
+              
+              return (
+                <div
+                  key={index}
+                  className="bg-white rounded-xl p-4 shadow-md border-l-4 border-orange-500 hover:shadow-lg transition-shadow"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p className="font-bold text-gray-800">{order.customerName}</p>
+                      <p className="text-xs text-gray-500">Order ID: {order._id.substring(0, 10)}...</p>
+                    </div>
+                    {order.status !== 'Driver Get' && (
+                      <button
+                        onClick={() => handleGetOrder(order._id)}
+                        className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors flex items-center"
+                      >
+                        <span className="mr-1">🚚</span>
+                        Accept Order
+                      </button>
+                    )}
                   </div>
                   
-                  <div className="bg-blue-50 rounded-lg p-3">
-                    <p className="text-xs font-medium text-blue-600">DELIVERY</p>
-                    <p className="text-sm font-medium mt-1 flex items-center">
-                      <span className="text-lg mr-1">📍</span>
-                      {order.userLocation}
-                    </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-orange-50 rounded-lg p-3">
+                      <p className="text-xs font-medium text-orange-600">PICKUP</p>
+                      <p className="text-sm font-medium mt-1 flex items-center">
+                        <span className="text-lg mr-1">🍽️</span>
+                        {order.resturantLocation}
+                      </p>
+                      {distanceText && (
+                        <p className="text-xs text-orange-500 mt-1">{distanceText}</p>
+                      )}
+                    </div>
+                    
+                    <div className="bg-blue-50 rounded-lg p-3">
+                      <p className="text-xs font-medium text-blue-600">DELIVERY</p>
+                      <p className="text-sm font-medium mt-1 flex items-center">
+                        <span className="text-lg mr-1">📍</span>
+                        {order.userLocation}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 pt-2 border-t border-gray-100 flex justify-between text-sm text-gray-500">
+                    <div className="flex items-center">
+                      <span className="mr-1">⏱️</span>
+                      <span>Estimated delivery: 25-30 mins</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="mr-1">💰</span>
+                      <span>Earnings: $8-12</span>
+                    </div>
                   </div>
                 </div>
-                
-                <div className="mt-3 pt-2 border-t border-gray-100 flex justify-between text-sm text-gray-500">
-                  <div className="flex items-center">
-                    <span className="mr-1">⏱️</span>
-                    <span>Estimated delivery: 25-30 mins</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="mr-1">💰</span>
-                    <span>Earnings: $8-12</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
