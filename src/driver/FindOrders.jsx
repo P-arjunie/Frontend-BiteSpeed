@@ -21,6 +21,8 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     Math.sin(dLon/2) * Math.sin(dLon/2); 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
   const distance = R * c; // Distance in km
+
+  console.log(distance);
   return distance;
 };
 
@@ -40,6 +42,8 @@ const FindOrders = () => {
   const [vehicleError, setError] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const navigate = useNavigate();
+
+  console.log(activeTab);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: 'AIzaSyBoJXxxWOMKdexaiud8ImxzzkaHtEIYtds',
@@ -204,14 +208,22 @@ const FindOrders = () => {
     ? orders 
     : activeTab === 'nearby' 
       ? orders.filter(order => {
+
+        console.log(location);
+        console.log(order.resturantDistance);
+        console.log(order.resturantDistance.latitude);
+        console.log(order.resturantDistance.longitude);
+
           // Check if both restaurant coordinates and driver location are available
-          if (!location || !order.resturantDistance || !order.resturantDistance.coordinates) {
+          if (!location || !order.resturantDistance) {
+            //console.log("false");
             return false;
+            
           }
           
           // Extract restaurant coordinates
-          const restaurantLat = order.resturantDistance.coordinates[1]; // Latitude
-          const restaurantLng = order.resturantDistance.coordinates[0]; // Longitude
+          const restaurantLat = order.resturantDistance.latitude; // Latitude
+          const restaurantLng = order.resturantDistance.longitude; // Longitude
 
           console.log(restaurantLat);
           console.log(restaurantLng);
