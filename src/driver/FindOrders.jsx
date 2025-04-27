@@ -212,6 +212,10 @@ const FindOrders = () => {
           // Extract restaurant coordinates
           const restaurantLat = order.resturantDistance.coordinates[1]; // Latitude
           const restaurantLng = order.resturantDistance.coordinates[0]; // Longitude
+
+          console.log(restaurantLat);
+          console.log(restaurantLng);
+
           
           // Calculate distance between driver and restaurant
           const distance = calculateDistance(
