@@ -310,7 +310,7 @@ const CustomerHome = () => {
             <Link to="/orders" className="hover:text-orange-400">
               My Orders
             </Link>
-            <Link to="/profile" className="hover:text-orange-400">
+            <Link to="/customer-profile" className="hover:text-orange-400">
               Profile
             </Link>
           </nav>

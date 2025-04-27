@@ -1,96 +1,3 @@
-// import { useState, useEffect } from 'react';
-// import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
-// export default function RestaurantOrdersChart() {
-//   const [data, setData] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       try {
-//         setLoading(true);
-//         const response = await fetch('https://ordermanagementservice.onrender.com/api/orders/');
-        
-//         if (!response.ok) {
-//           throw new Error(`HTTP error! Status: ${response.status}`);
-//         }
-        
-//         const orders = await response.json();
-        
-//         // Group orders by restaurant
-//         const restaurantCounts = orders.reduce((acc, order) => {
-//           const restaurantId = order.resturantId;
-//           const restaurantName = order.resturantLocation || restaurantId;
-          
-//           if (!acc[restaurantName]) {
-//             acc[restaurantName] = {
-//               name: restaurantName,
-//               count: 0
-//             };
-//           }
-          
-//           acc[restaurantName].count += 1;
-//           return acc;
-//         }, {});
-        
-//         // Convert to array for Recharts
-//         const chartData = Object.values(restaurantCounts);
-        
-//         setData(chartData);
-//         setLoading(false);
-//       } catch (err) {
-//         setError(err.message);
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchData();
-//   }, []);
-
-//   if (loading) {
-//     return <div className="flex justify-center items-center h-64">Loading orders data...</div>;
-//   }
-
-//   if (error) {
-//     return <div className="text-red-500 p-4">Error loading data: {error}</div>;
-//   }
-
-//   return (
-//     <div className="p-4 max-w-4xl mx-auto">
-//       <h2 className="text-xl font-bold mb-4 text-center">Restaurant Orders Count</h2>
-      
-//       {data.length === 0 ? (
-//         <p className="text-center">No order data available</p>
-//       ) : (
-//         <ResponsiveContainer width="100%" height={400}>
-//           <BarChart
-//             data={data}
-//             margin={{
-//               top: 20,
-//               right: 30,
-//               left: 20,
-//               bottom: 60
-//             }}
-//           >
-//             <CartesianGrid strokeDasharray="3 3" />
-//             <XAxis 
-//               dataKey="name" 
-//               angle={-45} 
-//               textAnchor="end"
-//               height={80}
-//             />
-//             <YAxis />
-//             <Tooltip />
-//             <Legend />
-//             <Bar dataKey="count" name="Number of Orders" fill="#8884d8" />
-//           </BarChart>
-//         </ResponsiveContainer>
-//       )}
-//     </div>
-//   );
-// }
-
 import { useState, useEffect } from 'react';
 import { 
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -98,8 +5,8 @@ import {
   Area, AreaChart, ComposedChart
 } from 'recharts';
 
-// Mock data for demonstration - replace with actual API calls
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+// Updated color palette to match the given theme
+const COLORS = ['#f97316', '#ea580c', '#fed7aa', '#fdba74', '#facc15', '#f87171'];
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState([]);
@@ -135,11 +42,11 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex justify-center items-center h-screen bg-gray-100">
         <div className="bg-white p-6 rounded-lg shadow-lg">
           <div className="flex flex-col items-center">
-            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="mt-4 text-gray-700">Loading dashboard data...</p>
+            <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-4 text-gray-800">Loading dashboard data...</p>
           </div>
         </div>
       </div>
@@ -148,11 +55,11 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 m-4" role="alert">
+      <div className="bg-red-100 border-l-4 border-red-400 text-gray-800 p-4 m-4" role="alert">
         <p className="font-bold">Error</p>
         <p>Failed to load dashboard data: {error}</p>
         <button 
-          className="mt-2 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+          className="mt-2 bg-red-400 hover:bg-red-500 text-white font-bold py-1 px-2 rounded"
           onClick={() => window.location.reload()}
         >
           Retry
@@ -404,12 +311,12 @@ export default function AdminDashboard() {
   const weekData = getCurrentWeekData();
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-100 min-h-screen">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="bg-orange-500 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Food Delivery Admin Dashboard</h1>
+            <h1 className="text-2xl font-bold text-white">Crust Pizza Admin Dashboard</h1>
             <div className="flex items-center space-x-2">
               <select 
                 className="border rounded-md px-3 py-1 text-sm"
@@ -421,12 +328,12 @@ export default function AdminDashboard() {
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
               </select>
-              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm">
+              <button className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-1 px-3 rounded text-sm">
                 Refresh Data
               </button>
               <div className="relative inline-block text-left">
-                <button className="bg-gray-100 p-2 rounded-full">
-                  <svg className="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <button className="bg-orange-600 p-2 rounded-full">
+                  <svg className="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                     <path fillRule="evenodd" d="M2 10a8 8 0 1116 0 8 8 0 01-16 0zm8-6a6 6 0 100 12 6 6 0 000-12z" clipRule="evenodd" />
                   </svg>
@@ -446,7 +353,7 @@ export default function AdminDashboard() {
                 key={tab}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-orange-500 text-orange-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
                 onClick={() => setActiveTab(tab)}
@@ -464,23 +371,23 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-5">
             <h3 className="text-gray-500 text-sm font-medium">Total Orders</h3>
-            <p className="text-3xl font-bold text-gray-900">{dashboardSummary.totalOrders}</p>
+            <p className="text-3xl font-bold text-gray-800">{dashboardSummary.totalOrders}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-5">
             <h3 className="text-gray-500 text-sm font-medium">Pending Orders</h3>
-            <p className="text-3xl font-bold text-yellow-500">{dashboardSummary.pendingOrders}</p>
+            <p className="text-3xl font-bold text-yellow-400">{dashboardSummary.pendingOrders}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-5">
             <h3 className="text-gray-500 text-sm font-medium">Delivered Orders</h3>
-            <p className="text-3xl font-bold text-green-500">{dashboardSummary.deliveredOrders}</p>
+            <p className="text-3xl font-bold text-orange-500">{dashboardSummary.deliveredOrders}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-5">
             <h3 className="text-gray-500 text-sm font-medium">Total Revenue</h3>
-            <p className="text-3xl font-bold text-gray-900">Rs. {dashboardSummary.totalRevenue}</p>
+            <p className="text-3xl font-bold text-gray-800">Rs. {dashboardSummary.totalRevenue}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-5">
             <h3 className="text-gray-500 text-sm font-medium">Avg. Order Value</h3>
-            <p className="text-3xl font-bold text-gray-900">Rs. {dashboardSummary.averageOrderValue}</p>
+            <p className="text-3xl font-bold text-gray-800">Rs. {dashboardSummary.averageOrderValue}</p>
           </div>
         </div>
 
@@ -489,7 +396,7 @@ export default function AdminDashboard() {
             {/* Charts Row 1 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">Orders Over Time</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Orders Over Time</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <ComposedChart data={dailyData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -498,14 +405,14 @@ export default function AdminDashboard() {
                     <YAxis yAxisId="right" orientation="right" />
                     <Tooltip />
                     <Legend />
-                    <Bar yAxisId="left" dataKey="orders" name="Number of Orders" fill="#8884d8" />
-                    <Line yAxisId="right" type="monotone" dataKey="revenue" name="Revenue (Rs)" stroke="#ff7300" />
+                    <Bar yAxisId="left" dataKey="orders" name="Number of Orders" fill="#f97316" />
+                    <Line yAxisId="right" type="monotone" dataKey="revenue" name="Revenue (Rs)" stroke="#ea580c" />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
 
               <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">Order Status Distribution</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Order Status Distribution</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -514,7 +421,7 @@ export default function AdminDashboard() {
                       cy="50%"
                       labelLine={false}
                       outerRadius={100}
-                      fill="#8884d8"
+                      fill="#f97316"
                       dataKey="value"
                       nameKey="name"
                       label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
@@ -533,7 +440,7 @@ export default function AdminDashboard() {
             {/* Charts Row 2 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">Top Restaurants by Orders</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Top Restaurants by Orders</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={restaurantData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -541,13 +448,13 @@ export default function AdminDashboard() {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="count" name="Number of Orders" fill="#8884d8" />
+                    <Bar dataKey="count" name="Number of Orders" fill="#f97316" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
               <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">Top Selling Items</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Top Selling Items</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={topSellingItems} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" />
@@ -555,7 +462,7 @@ export default function AdminDashboard() {
                     <YAxis dataKey="name" type="category" width={150} />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="count" name="Units Sold" fill="#82ca9d" />
+                    <Bar dataKey="count" name="Units Sold" fill="#fdba74" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -564,7 +471,7 @@ export default function AdminDashboard() {
             {/* Charts Row 3 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">Weekly Order Distribution</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Weekly Order Distribution</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={weekData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -572,36 +479,36 @@ export default function AdminDashboard() {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="orders" name="Orders" fill="#82ca9d" />
+                    <Bar dataKey="orders" name="Orders" fill="#fdba74" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
               <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">Customer Retention</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Customer Retention</h3>
                 <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm text-blue-500">Retention Rate</p>
-                    <p className="text-2xl font-bold">{customerStats.retentionRate}%</p>
+                  <div className="bg-orange-100 p-4 rounded-lg">
+                    <p className="text-sm text-orange-600">Retention Rate</p>
+                    <p className="text-2xl font-bold text-orange-600">{customerStats.retentionRate}%</p>
                   </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <p className="text-sm text-green-500">Avg Orders/Customer</p>
-                    <p className="text-2xl font-bold">{customerStats.avgOrdersPerCustomer}</p>
+                  <div className="bg-orange-200 p-4 rounded-lg">
+                    <p className="text-sm text-orange-600">Avg Orders/Customer</p>
+                    <p className="text-2xl font-bold text-orange-600">{customerStats.avgOrdersPerCustomer}</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-center h-48">
                   <div className="relative w-48 h-48">
                     <svg viewBox="0 0 100 100" className="relative">
-                      <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" strokeWidth="10" />
+                      <circle cx="50" cy="50" r="45" fill="none" stroke="#fdba74" strokeWidth="10" />
                       <circle 
-                        cx="50" cy="50" r="45" fill="none" stroke="#3b82f6" strokeWidth="10"
+                        cx="50" cy="50" r="45" fill="none" stroke="#f97316" strokeWidth="10"
                         strokeDasharray={`${customerStats.retentionRate * 2.83} 283`}
                         strokeDashoffset="0"
                         transform="rotate(-90 50 50)"
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <p className="text-3xl font-bold text-blue-600">{customerStats.returningCustomers}</p>
+                      <p className="text-3xl font-bold text-orange-500">{customerStats.returningCustomers}</p>
                       <p className="text-sm text-gray-500">Returning</p>
                       <p className="text-sm text-gray-500">Customers</p>
                     </div>
@@ -615,16 +522,16 @@ export default function AdminDashboard() {
         {activeTab === 'restaurants' && (
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Restaurant Performance</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Restaurant Performance</h3>
               <div className="flex justify-end mb-4">
                 <button 
-                  className={`px-3 py-1 rounded text-sm mr-2 ${mapView ? 'bg-gray-200' : 'bg-blue-500 text-white'}`}
+                  className={`px-3 py-1 rounded text-sm mr-2 ${mapView ? 'bg-gray-200' : 'bg-orange-500 text-white'}`}
                   onClick={() => setMapView(false)}
                 >
                   Chart View
                 </button>
                 <button 
-                  className={`px-3 py-1 rounded text-sm ${mapView ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                  className={`px-3 py-1 rounded text-sm ${mapView ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
                   onClick={() => setMapView(true)}
                 >
                   Map View
@@ -635,7 +542,7 @@ export default function AdminDashboard() {
               {mapView ? (
                 <div className="flex justify-center items-center h-96 bg-gray-100">
                   <div className="text-center">
-                    <div className="h-12 w-12 mx-auto mb-4">
+                    <div className="h-12 w-12 mx-auto mb-4 text-orange-500">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                       </svg>
@@ -653,14 +560,14 @@ export default function AdminDashboard() {
                     <YAxis yAxisId="right" orientation="right" />
                     <Tooltip />
                     <Legend />
-                    <Bar yAxisId="left" dataKey="count" name="Number of Orders" fill="#8884d8" />
-                    <Bar yAxisId="right" dataKey="revenue" name="Revenue (Rs)" fill="#82ca9d" />
+                    <Bar yAxisId="left" dataKey="count" name="Number of Orders" fill="#f97316" />
+                    <Bar yAxisId="right" dataKey="revenue" name="Revenue (Rs)" fill="#fdba74" />
                   </BarChart>
                 </ResponsiveContainer>
               )}
             </div>
             <div className="p-6 border-t border-gray-200">
-              <h4 className="font-medium mb-2">Restaurant Details</h4>
+              <h4 className="font-medium text-gray-800 mb-2">Restaurant Details</h4>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -675,7 +582,7 @@ export default function AdminDashboard() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {restaurantData.map((restaurant, index) => (
                       <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{restaurant.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{restaurant.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{restaurant.count}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rs. {restaurant.revenue}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -683,7 +590,7 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           <button 
-                            className="text-blue-500 hover:text-blue-700"
+                            className="text-orange-500 hover:text-orange-700"
                             onClick={() => setSelectedRestaurant(restaurant)}
                           >
                             View Details
