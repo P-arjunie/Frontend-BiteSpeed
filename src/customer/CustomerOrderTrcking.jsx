@@ -201,9 +201,9 @@ const CustomerOrderTracking = () => {
     switch (status) {
       case 'Waiting for Accepted':
         return 0;
-      case 'Preparing Order':
+      case 'Accepted':
         return 1;
-      case 'Out for Delivery':
+      case 'PickUp':
         return 2;
       case 'Delivered':
         return 3;

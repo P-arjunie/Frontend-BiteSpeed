@@ -12,6 +12,7 @@ const AddVehicle = () => {
   const [error, setError] = useState('');
   const [vehicles, setVehicles] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const token = localStorage.getItem('token');
 
@@ -23,6 +24,7 @@ const AddVehicle = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setIsSubmitting(true);
 
     try {
       const res = await fetch('https://driver-service-3k84.onrender.com/api/drivers/vehicle/add', {
@@ -37,15 +39,17 @@ const AddVehicle = () => {
       const data = await res.json();
 
       if (res.ok) {
-        setSuccess('✅ Vehicle added successfully!');
+        setSuccess('Vehicle added successfully!');
         setVehicleData({ number: '', model: '', color: '', year: '' });
         fetchVehicles();
         setShowForm(false);
       } else {
-        setError(data.message || '❌ Failed to add vehicle.');
+        setError(data.message || 'Failed to add vehicle.');
       }
     } catch (err) {
-      setError('❌ Error adding vehicle.');
+      setError('Error adding vehicle.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -73,107 +77,193 @@ const AddVehicle = () => {
   }, []);
 
   return (
-    <div className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-xl">
-      <h2 className="text-3xl font-bold text-center text-blue-700 mb-8">Your Vehicles</h2>
+    <div className="bg-gray-50 min-h-screen pb-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-4 shadow-lg">
+        <h2 className="text-2xl font-bold text-white text-center">My Vehicles</h2>
+        <p className="text-white text-center text-sm opacity-80 mt-1">
+          Manage your delivery vehicles
+        </p>
+      </div>
 
-      {success && <div className="bg-green-100 text-green-800 p-3 mb-4 rounded-md">{success}</div>}
-      {error && <div className="bg-red-100 text-red-800 p-3 mb-4 rounded-md">{error}</div>}
-
-      <ul className="space-y-4 mb-6">
-        {vehicles.length > 0 ? (
-          vehicles.map((vehicle) => (
-            <li key={vehicle._id} className="p-4 border border-gray-200 rounded-lg bg-gray-50 shadow-sm">
-              <p><span className="font-medium text-gray-700">Number:</span> {vehicle.number}</p>
-              <p><span className="font-medium text-gray-700">Model:</span> {vehicle.model}</p>
-              <p><span className="font-medium text-gray-700">Color:</span> {vehicle.color}</p>
-              <p><span className="font-medium text-gray-700">Year:</span> {vehicle.year}</p>
-            </li>
-          ))
-        ) : (
-          <p className="text-gray-500">No vehicles found.</p>
+      <div className="max-w-2xl mx-auto mt-4 px-4">
+        {success && (
+          <div className="p-4 mb-4 rounded-xl overflow-hidden shadow-lg border-2 border-green-300 bg-green-50 text-center">
+            <div className="mb-2">
+              <span className="text-3xl">✅</span>
+            </div>
+            <p className="text-green-700 font-medium">{success}</p>
+          </div>
         )}
-      </ul>
+        
+        {error && (
+          <div className="p-4 mb-4 rounded-xl overflow-hidden shadow-lg border-2 border-red-300 bg-red-50 text-center">
+            <div className="mb-2">
+              <span className="text-3xl">❌</span>
+            </div>
+            <p className="text-red-700 font-medium">{error}</p>
+          </div>
+        )}
 
-      {!showForm && (
-        <div className="text-center">
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md shadow-md transition"
-          >
-            Add New Vehicle
-          </button>
+        {/* Vehicle List */}
+        <div className="p-4 bg-white shadow-lg rounded-xl border border-orange-200 mb-4">
+          <h3 className="text-xl font-bold text-orange-600 mb-4 border-b border-orange-100 pb-2">
+            Your Vehicles
+          </h3>
+          
+          {vehicles.length > 0 ? (
+            <div className="space-y-4">
+              {vehicles.map((vehicle) => (
+                <div key={vehicle._id} className="bg-orange-50 rounded-lg p-4 border border-orange-100 shadow-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-gray-700">
+                    <div>
+                      <p className="text-xs font-medium text-orange-600">VEHICLE NUMBER</p>
+                      <p className="text-sm font-medium mt-1">{vehicle.number}</p>
+                    </div>
+                    
+                    <div>
+                      <p className="text-xs font-medium text-orange-600">MODEL</p>
+                      <p className="text-sm font-medium mt-1">{vehicle.model}</p>
+                    </div>
+                    
+                    <div>
+                      <p className="text-xs font-medium text-orange-600">COLOR</p>
+                      <p className="text-sm font-medium mt-1">{vehicle.color}</p>
+                    </div>
+                    
+                    <div>
+                      <p className="text-xs font-medium text-orange-600">YEAR</p>
+                      <p className="text-sm font-medium mt-1">{vehicle.year}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <div className="text-4xl mb-3">🚲</div>
+              <p>No vehicles found. Add your first vehicle to start delivering.</p>
+            </div>
+          )}
         </div>
-      )}
 
-      {showForm && (
-        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Add Vehicle</h3>
-
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Vehicle Number</label>
-            <input
-              type="text"
-              name="number"
-              value={vehicleData.number}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Model</label>
-            <input
-              type="text"
-              name="model"
-              value={vehicleData.model}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Bike Color</label>
-            <input
-              type="text"
-              name="color"
-              value={vehicleData.color}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Year</label>
-            <input
-              type="number"
-              name="year"
-              value={vehicleData.year}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-
-          <div className="flex justify-between">
+        {/* Add Vehicle Form */}
+        {!showForm ? (
+          <div className="text-center">
             <button
-              type="submit"
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md shadow-md transition"
+              onClick={() => setShowForm(true)}
+              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors flex items-center justify-center mx-auto"
             >
-              Submit
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-md"
-            >
-              Cancel
+              <span className="mr-2">➕</span>
+              Add New Vehicle
             </button>
           </div>
-        </form>
-      )}
+        ) : (
+          <div className="p-4 bg-white shadow-lg rounded-xl border border-orange-200">
+            <h3 className="text-xl font-bold text-orange-600 mb-4 border-b border-orange-100 pb-2">
+              Add New Vehicle
+            </h3>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="bg-orange-50 rounded-lg p-3">
+                <label className="text-xs font-medium text-orange-600 block mb-1">VEHICLE NUMBER</label>
+                <input
+                  type="text"
+                  name="number"
+                  value={vehicleData.number}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-orange-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+                  placeholder="e.g., KA-01-AB-1234"
+                />
+              </div>
+              
+              <div className="bg-orange-50 rounded-lg p-3">
+                <label className="text-xs font-medium text-orange-600 block mb-1">MODEL</label>
+                <input
+                  type="text"
+                  name="model"
+                  value={vehicleData.model}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-orange-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+                  placeholder="e.g., Honda Activa"
+                />
+              </div>
+              
+              <div className="bg-orange-50 rounded-lg p-3">
+                <label className="text-xs font-medium text-orange-600 block mb-1">COLOR</label>
+                <input
+                  type="text"
+                  name="color"
+                  value={vehicleData.color}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-orange-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+                  placeholder="e.g., Black"
+                />
+              </div>
+              
+              <div className="bg-orange-50 rounded-lg p-3">
+                <label className="text-xs font-medium text-orange-600 block mb-1">YEAR</label>
+                <input
+                  type="number"
+                  name="year"
+                  value={vehicleData.year}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-orange-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+                  placeholder="e.g., 2022"
+                  min="1990"
+                  max={new Date().getFullYear()}
+                />
+              </div>
+              
+              <div className="flex justify-between mt-6">
+                <button
+                  type="submit"
+                  className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors flex items-center justify-center"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </span>
+                  ) : (
+                    <span className="flex items-center">
+                      <span className="mr-2">✅</span>
+                      Save Vehicle
+                    </span>
+                  )}
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-md transition-colors flex items-center justify-center"
+                >
+                  <span className="mr-2">❌</span>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+      </div>
+      
+      {/* Fixed Action Button */}
+      <div className="fixed bottom-4 right-4">
+        <button 
+          onClick={() => window.location.reload()}
+          className="bg-orange-500 text-white h-14 w-14 rounded-full shadow-lg flex items-center justify-center hover:bg-orange-600 transition-colors"
+        >
+          <span className="text-2xl">🔄</span>
+        </button>
+      </div>
     </div>
   );
 };
