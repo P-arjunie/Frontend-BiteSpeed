@@ -318,14 +318,14 @@ const ViewMenu = () => {
                     className="w-full h-40 object-cover rounded-xl mb-4"
                   />
                 )}
-                <div className="flex justify-between gap-4 items-start">
+              <div className="flex justify-between gap-4 items-start">
                 <div className="flex-1">
                     <h3 className="text-lg font-bold text-orange-800">{item.name}</h3>
                     <p className="text-sm text-gray-600 mt-1 truncate">{item.description}</p>
                     <p className={`text-sm font-semibold mt-1 ${item.isAvailable ? "text-green-600" : "text-red-500"}`}>
                     {item.isAvailable ? "🟢 Available" : "🔴 Not Available"}
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-gray-500 mt-1">
                        <span className="font-semibold text-orange-600">Category:</span> {item.category}
                     </p>
                 </div>
@@ -333,7 +333,7 @@ const ViewMenu = () => {
                   <div className="text-right whitespace-nowrap">
                     <p className="text-lg font-bold text-orange-800">Rs. {item.price}</p>
                     <button
-                      onClick={() => navigate("/basket")}
+                      onClick={() => navigate("/basket", { state: { item } })}
                       className="mt-3 px-4 py-1.5 rounded-full bg-orange-500 text-white font-semibold hover:bg-orange-600 transition"
                     >
                       Order
