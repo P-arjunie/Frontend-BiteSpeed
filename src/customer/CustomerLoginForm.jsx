@@ -123,7 +123,7 @@ const CustomerLoginForm = () => {
             
             <p className="text-center mt-6 text-gray-700">
               First time here? {' '}
-              <Link to="/register-customer" className="text-orange-500 hover:text-orange-600 font-bold hover:underline">
+              <Link to="/customer-register" className="text-orange-500 hover:text-orange-600 font-bold hover:underline">
                 Create an account!
               </Link>
             </p>
