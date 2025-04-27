@@ -1,11 +1,12 @@
 /*
 import React, { useEffect, useState } from "react";
-import RestaurantDashboardSidebar from '../components/RestaurantDashboardSidebar';
+import RestaurantDashboardSidebar from "../components/RestaurantDashboardSidebar";
 
 const HandleOrders = () => {
   const [orders, setOrders] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState("All");
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -69,18 +70,42 @@ const HandleOrders = () => {
   };
 
   const statusOptions = ["Accepted", "Out for Delivery", "Delivered"];
+  const filterOptions = ["All", "Pending", "Accepted", "Out for Delivery", "Delivered"];
+
+  const filteredOrders =
+    filterStatus === "All"
+      ? orders
+      : orders.filter((order) => order.status === filterStatus);
 
   return (
     <div className="flex">
       <RestaurantDashboardSidebar />
       <div className="flex-1 p-6 bg-gray-100 min-h-screen">
         <h2 className="text-2xl font-semibold mb-4">Manage Orders</h2>
+
+        
+        <div className="mb-4">
+          <label className="mr-2 font-medium">Filter by Status:</label>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2"
+          >
+            {filterOptions.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        
         {loading ? (
           <p>Loading orders...</p>
         ) : error ? (
           <p className="text-red-500">{error}</p>
-        ) : orders.length === 0 ? (
-          <p>No orders found.</p>
+        ) : filteredOrders.length === 0 ? (
+          <p>No orders found for selected filter.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border rounded shadow-md">
@@ -97,7 +122,7 @@ const HandleOrders = () => {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order) => (
+                {filteredOrders.map((order) => (
                   <tr key={order.orderId} className="border-t hover:bg-gray-50">
                     <td className="p-3">{order.customerName}</td>
                     <td className="p-3">{order.itemName}</td>
@@ -106,13 +131,19 @@ const HandleOrders = () => {
                     <td className="p-3">{order.address}</td>
                     <td className="p-3">{order.phone}</td>
                     <td className="p-3">
-                      <span className={`px-2 py-1 rounded text-sm font-medium ${
-                        order.status === "Pending" ? "bg-yellow-200 text-yellow-800" :
-                        order.status === "Accepted" ? "bg-blue-200 text-blue-800" :
-                        order.status === "Out for Delivery" ? "bg-orange-200 text-orange-800" :
-                        order.status === "Delivered" ? "bg-green-200 text-green-800" :
-                        "bg-gray-200 text-gray-800"
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded text-sm font-medium ${
+                          order.status === "Pending"
+                            ? "bg-yellow-200 text-yellow-800"
+                            : order.status === "Accepted"
+                            ? "bg-blue-200 text-blue-800"
+                            : order.status === "Out for Delivery"
+                            ? "bg-orange-200 text-orange-800"
+                            : order.status === "Delivered"
+                            ? "bg-green-200 text-green-800"
+                            : "bg-gray-200 text-gray-800"
+                        }`}
+                      >
                         {order.status}
                       </span>
                     </td>
@@ -123,11 +154,15 @@ const HandleOrders = () => {
                           defaultValue=""
                           className="border border-gray-300 rounded px-2 py-1 text-sm"
                         >
-                          <option value="" disabled>Update Status</option>
+                          <option value="" disabled>
+                            Update Status
+                          </option>
                           {statusOptions
                             .filter((s) => s !== order.status)
                             .map((status) => (
-                              <option key={status} value={status}>{status}</option>
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
                             ))}
                         </select>
                       )}
@@ -145,6 +180,7 @@ const HandleOrders = () => {
 
 export default HandleOrders;
 */
+
 
 import React, { useEffect, useState } from "react";
 import RestaurantDashboardSidebar from "../components/RestaurantDashboardSidebar";
@@ -164,7 +200,7 @@ const HandleOrders = () => {
           return;
         }
 
-        const res = await fetch("http://localhost:5000/api/restaurant/orders/me", {
+        const res = await fetch("https://restaurant-management-service.onrender.com/api/restaurant/orders/me", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -191,7 +227,7 @@ const HandleOrders = () => {
   const updateStatus = async (orderId, status) => {
     try {
       const token = localStorage.getItem("restaurantToken");
-      const res = await fetch(`http://localhost:5000/api/restaurant/orders/${orderId}/status`, {
+      const res = await fetch(`https://restaurant-management-service.onrender.com/api/restaurant/orders/${orderId}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -326,6 +362,9 @@ const HandleOrders = () => {
 };
 
 export default HandleOrders;
+
+
+
 
 
 
