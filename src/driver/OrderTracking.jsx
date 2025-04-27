@@ -269,6 +269,11 @@ const OrderTracking = () => {
               <p className="text-xs font-medium text-orange-600">CUSTOMER</p>
               <p className="text-sm font-medium mt-1">{order.customerName}</p>
             </div>
+
+            <div className="bg-orange-50 rounded-lg p-3">
+              <p className="text-xs font-medium text-orange-600">CUSTOMER NUMBER</p>
+              <p className="text-sm font-medium mt-1">{order.phone}</p>
+            </div>
             
             <div className="bg-orange-50 rounded-lg p-3">
               <p className="text-xs font-medium text-orange-600">PICKUP</p>
