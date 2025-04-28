@@ -4,7 +4,7 @@ import { useState } from 'react';
 const BasketPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { item } = location.state || {};
+  const { item , restaurantId } = location.state || {};
   
   const [quantity, setQuantity] = useState(1);
 
@@ -28,11 +28,12 @@ const BasketPage = () => {
       price: item.price,
       quantity,
       image: item.image,
+      restaurantId,
     });
     localStorage.setItem('cart', JSON.stringify(cart));
 
     // Navigate to Cart Page
-    navigate('/cart', { state: { cartItems: cart } });
+    navigate('/cart', { state: { cartItems: cart , restaurantId} });
   };
 
   return (
@@ -83,6 +84,10 @@ const BasketPage = () => {
               <p className="text-lg font-bold text-orange-700">
                 Rs. {item.price}
               </p>
+                {/* Restaurant ID Display */}
+          <p className="text-sm text-gray-500">
+            <span className="font-semibold text-orange-600">Restaurant ID:</span> {restaurantId}
+          </p>
             </div>
 
             {/* Quantity and Total */}
