@@ -189,6 +189,12 @@ const FindOrders = () => {
         }
       );
 
+      await setDoc(doc(db, 'OrderStatues', orderId), {
+        orderId: orderId,
+        status: 'Assigned',
+        
+      });
+
       const selectedOrder = orders.find((o) => o._id === orderId);
       navigate('/dashboard/tracking', {
         state: {

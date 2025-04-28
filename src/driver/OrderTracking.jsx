@@ -7,7 +7,7 @@ import {
   useJsApiLoader,
 } from '@react-google-maps/api';
 import axios from 'axios';
-import { doc, setDoc, getFirestore } from 'firebase/firestore';
+import { doc, setDoc, getFirestore,updateDoc } from 'firebase/firestore';
 import { getApp } from 'firebase/app';
 
 const containerStyle = {
@@ -113,7 +113,7 @@ const OrderTracking = () => {
           setDriverLocation(newLocation);
           
           // Update only location in Firestore
-          updateDriverLocationInFirestore(newLocation);
+          //updateDriverLocationInFirestore(newLocation);
 
           if (!pickedUp && restaurantLatLng) {
             updateRoute(newLocation, restaurantLatLng);
@@ -140,6 +140,10 @@ const OrderTracking = () => {
       setIsUpdating(true);
       setUpdateMessage('');
 
+      await updateDoc(doc(db, 'OrderStatues', order._id), {
+        status: 'PickUp'
+      });
+
       await axios.patch(
         `https://ordermanagementservice.onrender.com/api/orders/${order._id}/update-status`,
         { status: 'PickUp' }
@@ -160,6 +164,10 @@ const OrderTracking = () => {
     try {
       setIsUpdating(true);
       setUpdateMessage('');
+
+      await updateDoc(doc(db, 'OrderStatues', order._id), {
+        status: 'Delivered'
+      });
 
       await axios.patch(
         `https://ordermanagementservice.onrender.com/api/orders/${order._id}/update-status`,
