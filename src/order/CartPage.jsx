@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const CartPage = () => {
-  const [cartItems, setCartItems] = useState([]);
+  const location = useLocation();
+  const { cartItems: initialCartItems, restaurantId } = location.state || {};  // Get cartItems and restaurantId from location state
+
+  const [cartItems, setCartItems] = useState(initialCartItems || []);
 
   useEffect(() => {
     const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -74,6 +77,7 @@ const CartPage = () => {
                     <p className="text-lg font-bold text-orange-700">
                       Rs. {item.price}
                     </p>
+                   
                   </div>
 
                   {/* Quantity Controls and Item Total */}
@@ -121,7 +125,7 @@ const CartPage = () => {
 
         {/* Proceed to Payment */}
         {cartItems.length > 0 && (
-          <Link to="/OrderSummary" className="block">
+          <Link to="/OrderSummary" state={{ restaurantId }} className="block">
             <button className="w-full py-2 mt-6 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
               View Summary
             </button>
@@ -155,9 +159,6 @@ const CartPage = () => {
         </div>
       </footer>
     </div>
-
-   
-    
   );
 };
 
