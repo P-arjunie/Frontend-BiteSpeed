@@ -181,13 +181,19 @@ const FindOrders = () => {
         }
       );
 
-      // Step 2: Update status to 'Pending'
+      // Step 2: Update status to 'Out For Delivery'
       await axios.patch(
         `https://ordermanagementservice.onrender.com/api/orders/${orderId}/update-status`,
         {
-          status: 'Pending',
+          status: 'Assigned',
         }
       );
+
+      await setDoc(doc(db, 'OrderStatues', orderId), {
+        orderId: orderId,
+        status: 'Assigned',
+        
+      });
 
       const selectedOrder = orders.find((o) => o._id === orderId);
       navigate('/dashboard/tracking', {

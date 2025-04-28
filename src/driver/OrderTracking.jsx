@@ -7,6 +7,8 @@ import {
   useJsApiLoader,
 } from '@react-google-maps/api';
 import axios from 'axios';
+import { doc, setDoc, getFirestore,updateDoc } from 'firebase/firestore';
+import { getApp } from 'firebase/app';
 
 const containerStyle = {
   width: '100%',
@@ -34,6 +36,9 @@ const OrderTracking = () => {
   const [updateMessage, setUpdateMessage] = useState('');
   const [pickedUp, setPickedUp] = useState(false);
   const [delivered, setDelivered] = useState(false);
+  
+  // Initialize Firestore
+  const db = getFirestore(getApp());
 
   const restaurantLatLng = restaurantLocation && {
     lat: parseFloat(restaurantLocation.latitude),
@@ -77,7 +82,26 @@ const OrderTracking = () => {
     }
   }, [isLoaded, driverLocation, restaurantLatLng, customerLatLng, pickedUp, delivered]);
 
-  // Real-Time Location Tracking
+  // Update driver location in Firestore
+  const updateDriverLocationInFirestore = async (location) => {
+    try {
+      if (!order || !order._id) return;
+      
+      // Only update the location field in Firestore
+      await setDoc(doc(db, 'assignedOrders', order._id), {
+        driverLocation: {
+          latitude: location.lat,
+          longitude: location.lng,
+        },
+      }, { merge: true }); // Using merge to only update the location field
+      
+      console.log('Driver location updated in Firestore');
+    } catch (error) {
+      console.error('Error updating driver location in Firestore:', error);
+    }
+  };
+
+  // Real-Time Location Tracking with Firestore updates
   useEffect(() => {
     if (isLoaded && !delivered) {
       const watchId = navigator.geolocation.watchPosition(
@@ -87,6 +111,9 @@ const OrderTracking = () => {
             lng: position.coords.longitude,
           };
           setDriverLocation(newLocation);
+          
+          // Update only location in Firestore
+          //updateDriverLocationInFirestore(newLocation);
 
           if (!pickedUp && restaurantLatLng) {
             updateRoute(newLocation, restaurantLatLng);
@@ -113,9 +140,13 @@ const OrderTracking = () => {
       setIsUpdating(true);
       setUpdateMessage('');
 
+      await updateDoc(doc(db, 'OrderStatues', order._id), {
+        status: 'PickUp'
+      });
+
       await axios.patch(
         `https://ordermanagementservice.onrender.com/api/orders/${order._id}/update-status`,
-        { status: 'Pending' }
+        { status: 'PickUp' }
       );
 
       setDriverLocation(restaurantLatLng);
@@ -133,6 +164,10 @@ const OrderTracking = () => {
     try {
       setIsUpdating(true);
       setUpdateMessage('');
+
+      await updateDoc(doc(db, 'OrderStatues', order._id), {
+        status: 'Delivered'
+      });
 
       await axios.patch(
         `https://ordermanagementservice.onrender.com/api/orders/${order._id}/update-status`,
@@ -273,6 +308,10 @@ const OrderTracking = () => {
             <div className="bg-orange-50 rounded-lg p-3">
               <p className="text-xs font-medium text-orange-600">CUSTOMER NUMBER</p>
               <p className="text-sm font-medium mt-1">{order.phone}</p>
+            </div>
+            <div className="bg-orange-50 rounded-lg p-3">
+              <p className="text-xs font-medium text-orange-600">PRICE</p>
+              <p className="text-sm font-medium mt-1">{order.price}</p>
             </div>
             
             <div className="bg-orange-50 rounded-lg p-3">

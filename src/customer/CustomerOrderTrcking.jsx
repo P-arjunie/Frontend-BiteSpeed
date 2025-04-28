@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase'; // You'll need to ensure this is properly configured
 
 const CustomerOrderTracking = () => {
   const [orderId, setOrderId] = useState('');
   const [order, setOrder] = useState(null);
+  const [orderStatus, setOrderStatus] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [intervalId, setIntervalId] = useState(null);
   const [driverLocation, setDriverLocation] = useState(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [map, setMap] = useState(null);
@@ -29,6 +29,7 @@ const CustomerOrderTracking = () => {
     }
   }, []);
 
+  // Function to fetch initial order details from API
   const fetchOrder = async () => {
     if (!orderId.trim()) {
       setError('Please enter an order ID');
@@ -37,57 +38,97 @@ const CustomerOrderTracking = () => {
     
     setLoading(true);
     try {
+      // Fetch order details from API
       const response = await axios.get(`https://ordermanagementservice.onrender.com/api/orders/${orderId}`);
-      setOrder(response.data);
-      setError('');
       
-      // If status is "Out for Delivery", fetch driver location
-      if (response.data.status === 'Out for Delivery' && response.data.driverId) {
-        fetchDriverLocation(response.data.driverId, orderId);
-      }
+      // Set initial order data without status (will come from Firebase)
+      const orderData = response.data;
+      setOrder(orderData);
+      setError('');
+
+      // Start listening to Firebase for status updates
+      listenToOrderStatus(orderId);
+      
+      // If order might be out for delivery, also listen for driver location
+      listenToDriverLocation(orderId);
     } catch (err) {
       console.error(err);
       setError('Order not found. Please check the ID.');
       setOrder(null);
+      setOrderStatus(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchDriverLocation = async (driverId, orderId) => {
-    try {
-      // Get driver location from Firestore
-      const assignedOrderRef = doc(db, 'assignedOrders', orderId);
-      const assignedOrderSnap = await getDoc(assignedOrderRef);
-      
-      if (assignedOrderSnap.exists()) {
-        const assignedOrderData = assignedOrderSnap.data();
-        setDriverLocation(assignedOrderData.driverLocation);
-      } else {
-        console.error('No driver location found for this order');
+  // Set up Firebase listener for order status
+  const listenToOrderStatus = (orderIdValue) => {
+    // Set up listener for real-time order status updates from Firebase
+    return onSnapshot(
+      doc(db, 'OrderStatues', orderIdValue),
+      (docSnapshot) => {
+        if (docSnapshot.exists()) {
+          const statusData = docSnapshot.data();
+          console.log("Firebase status update:", statusData.status);
+          setOrderStatus(statusData.status);
+        } else {
+          console.log("No status document found in Firebase");
+        }
+      },
+      (error) => {
+        console.error("Error listening to order status:", error);
       }
-    } catch (err) {
-      console.error('Error fetching driver location:', err);
-    }
+    );
   };
 
-  useEffect(() => {
-    if (orderId && order) {
-      const id = setInterval(() => {
-        fetchOrder();
-        // If status is "Out for Delivery", also refresh driver location
-        if (order.status === 'Out for Delivery' && order.driverId) {
-          fetchDriverLocation(order.driverId, orderId);
+  // Set up Firebase listener for driver location
+  const listenToDriverLocation = (orderIdValue) => {
+    return onSnapshot(
+      doc(db, 'assignedOrders', orderIdValue),
+      (docSnapshot) => {
+        if (docSnapshot.exists()) {
+          const assignedOrderData = docSnapshot.data();
+          setDriverLocation(assignedOrderData.driverLocation);
         }
-      }, 5000); // Fetch every 5 seconds
-      setIntervalId(id);
+      },
+      (error) => {
+        console.error("Error listening to driver location:", error);
+      }
+    );
+  };
+
+  // Set up Firebase listeners when orderId changes
+  useEffect(() => {
+    let orderStatusUnsubscribe = null;
+    let driverLocationUnsubscribe = null;
+    
+    if (orderId && order) {
+      // If we have an orderId and order data, set up the listeners
+      orderStatusUnsubscribe = listenToOrderStatus(orderId);
+      driverLocationUnsubscribe = listenToDriverLocation(orderId);
     }
-    return () => clearInterval(intervalId); // Clear when component unmounts
+    
+    // Clean up function to remove the listeners when component unmounts or orderId changes
+    return () => {
+      if (orderStatusUnsubscribe) {
+        orderStatusUnsubscribe();
+      }
+      if (driverLocationUnsubscribe) {
+        driverLocationUnsubscribe();
+      }
+    };
   }, [orderId, order]);
+
+  // Get the current status - prioritize Firebase status if available
+  const getCurrentStatus = () => {
+    return orderStatus || (order ? order.status : null);
+  };
 
   // Initialize map when both order and driver location are available and map is loaded
   useEffect(() => {
-    if (mapLoaded && order && driverLocation && order.status === 'Out for Delivery' && order.userDistance && mapRef) {
+    const status = getCurrentStatus();
+    
+    if (mapLoaded && order && driverLocation && status === 'PickUp' && order.userDistance && mapRef) {
       // Create map if not already created
       if (!map) {
         const userLocation = {
@@ -160,7 +201,7 @@ const CustomerOrderTracking = () => {
         });
         
         // Add driver marker
-        new window.google.maps.Marker({
+        const driverMarker = new window.google.maps.Marker({
           position: driverLoc,
           map: newMap,
           title: "Driver Location",
@@ -168,6 +209,23 @@ const CustomerOrderTracking = () => {
             url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
           }
         });
+        
+        // Update driver marker position when driver location changes
+        const driverLocationUnsubscribe = onSnapshot(
+          doc(db, 'assignedOrders', orderId),
+          (docSnapshot) => {
+            if (docSnapshot.exists()) {
+              const assignedOrderData = docSnapshot.data();
+              if (assignedOrderData.driverLocation) {
+                const newDriverLoc = {
+                  lat: parseFloat(assignedOrderData.driverLocation.latitude) || 0,
+                  lng: parseFloat(assignedOrderData.driverLocation.longitude) || 0
+                };
+                driverMarker.setPosition(newDriverLoc);
+              }
+            }
+          }
+        );
         
         // Draw route between driver and user
         const directionsService = new window.google.maps.DirectionsService();
@@ -193,17 +251,22 @@ const CustomerOrderTracking = () => {
         });
         
         setMap(newMap);
+        
+        // Clean up function
+        return () => {
+          driverLocationUnsubscribe();
+        };
       }
     }
-  }, [mapLoaded, order, driverLocation, mapRef]);
+  }, [mapLoaded, order, driverLocation, mapRef, orderId, orderStatus]);
 
   const getStep = (status) => {
     switch (status) {
       case 'Waiting for Accepted':
         return 0;
-      case 'Preparing Order':
+      case 'Accepted':
         return 1;
-      case 'Out for Delivery':
+      case 'PickUp':
         return 2;
       case 'Delivered':
         return 3;
@@ -213,6 +276,9 @@ const CustomerOrderTracking = () => {
   };
 
   const statusSteps = ['Waiting for Accepted', 'Preparing Order', 'Out for Delivery', 'Delivered'];
+  
+  // Get current status for display purposes
+  const status = getCurrentStatus();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-12 px-4">
@@ -251,6 +317,13 @@ const CustomerOrderTracking = () => {
 
           {order && (
             <div className="space-y-8">
+              {/* Firebase Status Display (debug)
+              {orderStatus && (
+                <div className="bg-orange-900 border-l-4 border-orange-500 p-4 mb-0 rounded-md">
+                  <p className="text-orange-200">Real-time status: {orderStatus}</p>
+                </div>
+              )} */}
+            
               {/* Progress Step Bar */}
               <div className="bg-gray-900 p-6 rounded-xl border border-gray-700">
                 <h2 className="text-xl font-semibold text-gray-200 mb-6">Order Status</h2>
@@ -261,26 +334,26 @@ const CustomerOrderTracking = () => {
                   {/* Progress Bar Fill */}
                   <div 
                     className="absolute top-0 left-0 h-2 bg-orange-500 rounded-full transition-all duration-500"
-                    style={{ width: `${(getStep(order.status) / 3) * 100}%` }}
+                    style={{ width: `${(getStep(status) / 3) * 100}%` }}
                   ></div>
                   
                   {/* Step Markers */}
                   <div className="flex justify-between mt-2">
-                    {statusSteps.map((step, index) => (
+                    {statusSteps.map((stepName, index) => (
                       <div key={index} className="relative flex flex-col items-center mt-2">
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${
-                          index <= getStep(order.status) 
+                          index <= getStep(status) 
                             ? 'bg-orange-500 border-orange-500' 
                             : 'bg-gray-800 border-gray-600'
                         }`}>
-                          {index <= getStep(order.status) && (
+                          {index <= getStep(status) && (
                             <span className="text-white text-xs">✓</span>
                           )}
                         </div>
                         <span className={`text-xs font-medium mt-2 text-center max-w-24 ${
-                          index <= getStep(order.status) ? 'text-orange-400' : 'text-gray-400'
+                          index <= getStep(status) ? 'text-orange-400' : 'text-gray-400'
                         }`}>
-                          {step}
+                          {stepName}
                         </span>
                       </div>
                     ))}
@@ -289,7 +362,7 @@ const CustomerOrderTracking = () => {
               </div>
 
               {/* Map Section - Only shown when order is Out for Delivery */}
-              {order.status === 'Out for Delivery' && (
+              {status === 'PickUp' && (
                 <div className="bg-gray-900 p-6 rounded-xl border border-gray-700">
                   <h2 className="text-xl font-semibold text-gray-200 mb-4">Live Delivery Tracking</h2>
                   <div 
@@ -321,24 +394,8 @@ const CustomerOrderTracking = () => {
               )}
 
               {/* Order Details */}
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="bg-gray-900 p-6 rounded-xl border border-gray-700">
-                  <h2 className="text-xl font-semibold text-gray-200 mb-4">Customer Details</h2>
-                  <div className="space-y-3">
-                    <div className="flex justify-between py-2 border-b border-gray-700">
-                      <span className="text-gray-400">Name</span>
-                      <span className="font-medium text-white">{order.userDistance.customerName}</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-gray-700">
-                      <span className="text-gray-400">Phone</span>
-                      <span className="font-medium text-white">{order.userDistance.phone}</span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                      <span className="text-gray-400">Address</span>
-                      <span className="font-medium text-white text-right">{order.userDistance.address}</span>
-                    </div>
-                  </div>
-                </div>
+              <div className="grid md:grid-cols-1 gap-8">
+                
 
                 <div className="bg-gray-900 p-6 rounded-xl border border-gray-700">
                   <h2 className="text-xl font-semibold text-gray-200 mb-4">Order Details</h2>
@@ -365,14 +422,14 @@ const CustomerOrderTracking = () => {
                   <div>
                     <h3 className="text-lg font-medium text-orange-300">Estimated Delivery</h3>
                     <p className="text-orange-200">
-                      {order.status === 'Delivered' 
+                      {status === 'Delivered' 
                         ? 'Your order has been delivered!' 
                         : 'Your order is on its way!'}
                     </p>
                   </div>
                   <div className="text-right">
                     <span className="text-2xl font-bold text-orange-300">
-                      {order.status === 'Delivered' ? 'Delivered' : 'In Progress'}
+                      {status === 'Delivered' ? 'Delivered' : 'In Progress'}
                     </span>
                   </div>
                 </div>
@@ -382,11 +439,11 @@ const CustomerOrderTracking = () => {
               <div className="bg-gray-900 p-6 rounded-xl border border-gray-700">
                 <h2 className="text-xl font-semibold text-gray-200 mb-4">Order Timeline</h2>
                 <div className="space-y-6">
-                  {statusSteps.map((step, index) => (
+                  {statusSteps.map((stepName, index) => (
                     <div key={index} className="flex">
                       <div className="mr-4">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          index <= getStep(order.status) 
+                          index <= getStep(status) 
                             ? 'bg-orange-500' 
                             : 'bg-gray-700'
                         }`}>
@@ -395,9 +452,9 @@ const CustomerOrderTracking = () => {
                       </div>
                       <div>
                         <h3 className={`font-medium ${
-                          index <= getStep(order.status) ? 'text-orange-400' : 'text-gray-400'
+                          index <= getStep(status) ? 'text-orange-400' : 'text-gray-400'
                         }`}>
-                          {step}
+                          {stepName}
                         </h3>
                         <p className="text-gray-500 text-sm">
                           {index === 0 && 'We received your order and are processing it.'}
