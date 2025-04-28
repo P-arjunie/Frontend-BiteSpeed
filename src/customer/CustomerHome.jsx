@@ -458,7 +458,7 @@ const CustomerHome = () => {
   <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
     {/* Brand Section */}
     <div className="text-center md:text-left">
-      <h2 className="text-2xl font-semibold text-orange-400">🍴 FoodieExpress</h2>
+      <h2 className="text-2xl font-semibold text-orange-400">🍴 BiteSpeed</h2>
       <p className="text-sm mt-2 text-gray-300">Delivering deliciousness to your door since 2025.</p>
     </div>
 
@@ -474,8 +474,8 @@ const CustomerHome = () => {
 
   {/* Footer Text Section */}
   <div className="mt-8 border-t border-gray-700 pt-6 text-center text-lg text-gray-400">
-    <p className="text-lg">© 2025 FoodieExpress. All rights reserved.</p>
-    <p className="mt-2 text-sm">Made with 🍲 by the FoodieExpress Dev Team</p>
+    <p className="text-lg">© 2025 BiteSpeed. All rights reserved.</p>
+    <p className="mt-2 text-sm">Made with 🍲 by the BiteSpeed Dev Team</p>
   </div>
 </footer>
 

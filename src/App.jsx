@@ -41,8 +41,12 @@ import "slick-carousel/slick/slick-theme.css";
 import HandleOrders from './restaurant/HandleOrders'
 
 
-
-
+import CartPage from './order/CartPage';
+import PaymentPage from './order/PaymentPage';
+// import OrderSummaryPage from './order/OrderSummaryPage';
+import OrdersTable from './order/OrdersTable';
+import BasketPage from './order/Basket';
+import OrderSummary from './order/OrderSummary'
 
 // This is the default content shown at /dashboard
 
@@ -87,7 +91,12 @@ function App() {
         <Route path="/restaurant/menu" element={<MenuManagement />} />
         <Route path="/restaurant/orders" element={<HandleOrders />} />
         
-       
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/payment" element={<PaymentPage />} />
+        {/* <Route path="/ordersummary" element={<OrderSummaryPage />} /> */}
+        <Route path="/orderDetails" element={<OrdersTable />} />
+        <Route path="/basket" element={<BasketPage />} />
+        <Route path="/OrderSummary" element={<OrderSummary />} />
         
       </Routes>
     </Router>

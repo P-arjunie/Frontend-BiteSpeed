@@ -238,7 +238,7 @@ const ViewMenu = () => {
       {/* Header */}
       <header className="w-full bg-black text-white py-4 px-6 rounded-xl mb-8 shadow-lg z-10 relative">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl md:text-3xl font-bold text-orange-500">🍴 FoodieExpress</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-orange-500">🍴 BiteSpeed</h1>
           <nav className="space-x-4 hidden sm:block">
             <Link to="/customer-home" className="hover:text-orange-400">Home</Link>
             <Link to="/orders" className="hover:text-orange-400">My Orders</Link>
@@ -318,14 +318,14 @@ const ViewMenu = () => {
                     className="w-full h-40 object-cover rounded-xl mb-4"
                   />
                 )}
-                <div className="flex justify-between gap-4 items-start">
+              <div className="flex justify-between gap-4 items-start">
                 <div className="flex-1">
                     <h3 className="text-lg font-bold text-orange-800">{item.name}</h3>
                     <p className="text-sm text-gray-600 mt-1 truncate">{item.description}</p>
                     <p className={`text-sm font-semibold mt-1 ${item.isAvailable ? "text-green-600" : "text-red-500"}`}>
                     {item.isAvailable ? "🟢 Available" : "🔴 Not Available"}
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-gray-500 mt-1">
                        <span className="font-semibold text-orange-600">Category:</span> {item.category}
                     </p>
                 </div>
@@ -333,7 +333,7 @@ const ViewMenu = () => {
                   <div className="text-right whitespace-nowrap">
                     <p className="text-lg font-bold text-orange-800">Rs. {item.price}</p>
                     <button
-                      onClick={() => navigate("/basket")}
+                      onClick={() => navigate("/basket", { state: { item } })}
                       className="mt-3 px-4 py-1.5 rounded-full bg-orange-500 text-white font-semibold hover:bg-orange-600 transition"
                     >
                       Order
@@ -350,7 +350,7 @@ const ViewMenu = () => {
       <footer className="mt-20 bg-black text-white rounded-xl shadow-lg px-6 py-8 z-10 relative">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-center md:text-left">
-            <h2 className="text-2xl font-semibold text-orange-400">🍴 FoodieExpress</h2>
+            <h2 className="text-2xl font-semibold text-orange-400">🍴 BiteSpeed</h2>
             <p className="text-sm mt-2 text-gray-300">Delivering deliciousness to your door since 2025.</p>
           </div>
           <div className="flex space-x-6 text-lg">
@@ -362,8 +362,8 @@ const ViewMenu = () => {
           </div>
         </div>
         <div className="mt-8 border-t border-gray-700 pt-6 text-center text-lg text-gray-400">
-          <p className="text-lg">© 2025 FoodieExpress. All rights reserved.</p>
-          <p className="mt-2 text-sm">Made with 🍲 by the FoodieExpress Dev Team</p>
+          <p className="text-lg">© 2025 BiteSpeed. All rights reserved.</p>
+          <p className="mt-2 text-sm">Made with 🍲 by the BiteSpeed Dev Team</p>
         </div>
       </footer>
     </div>

@@ -7,6 +7,8 @@ import {
   useJsApiLoader,
 } from '@react-google-maps/api';
 import axios from 'axios';
+import { doc, setDoc, getFirestore } from 'firebase/firestore';
+import { getApp } from 'firebase/app';
 
 const containerStyle = {
   width: '100%',
@@ -33,6 +35,10 @@ const OrderTracking = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMessage, setUpdateMessage] = useState('');
   const [pickedUp, setPickedUp] = useState(false);
+  const [delivered, setDelivered] = useState(false);
+  
+  // Initialize Firestore
+  const db = getFirestore(getApp());
 
   const restaurantLatLng = restaurantLocation && {
     lat: parseFloat(restaurantLocation.latitude),
@@ -71,14 +77,33 @@ const OrderTracking = () => {
       updateRoute(driverLocation, restaurantLatLng);
     }
 
-    if (isLoaded && pickedUp && driverLocation && customerLatLng) {
+    if (isLoaded && pickedUp && !delivered && driverLocation && customerLatLng) {
       updateRoute(driverLocation, customerLatLng);
     }
-  }, [isLoaded, driverLocation, restaurantLatLng, customerLatLng, pickedUp]);
+  }, [isLoaded, driverLocation, restaurantLatLng, customerLatLng, pickedUp, delivered]);
 
-  // ➡️ New Real-Time Location Tracking
+  // Update driver location in Firestore
+  const updateDriverLocationInFirestore = async (location) => {
+    try {
+      if (!order || !order._id) return;
+      
+      // Only update the location field in Firestore
+      await setDoc(doc(db, 'assignedOrders', order._id), {
+        driverLocation: {
+          latitude: location.lat,
+          longitude: location.lng,
+        },
+      }, { merge: true }); // Using merge to only update the location field
+      
+      console.log('Driver location updated in Firestore');
+    } catch (error) {
+      console.error('Error updating driver location in Firestore:', error);
+    }
+  };
+
+  // Real-Time Location Tracking with Firestore updates
   useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded && !delivered) {
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
           const newLocation = {
@@ -86,6 +111,9 @@ const OrderTracking = () => {
             lng: position.coords.longitude,
           };
           setDriverLocation(newLocation);
+          
+          // Update only location in Firestore
+          updateDriverLocationInFirestore(newLocation);
 
           if (!pickedUp && restaurantLatLng) {
             updateRoute(newLocation, restaurantLatLng);
@@ -105,7 +133,7 @@ const OrderTracking = () => {
         navigator.geolocation.clearWatch(watchId);
       };
     }
-  }, [isLoaded, pickedUp, restaurantLatLng, customerLatLng]);
+  }, [isLoaded, pickedUp, delivered, restaurantLatLng, customerLatLng]);
 
   const handlePickupClick = async () => {
     try {
@@ -114,7 +142,7 @@ const OrderTracking = () => {
 
       await axios.patch(
         `https://ordermanagementservice.onrender.com/api/orders/${order._id}/update-status`,
-        { status: 'Pending' }
+        { status: 'PickUp' }
       );
 
       setDriverLocation(restaurantLatLng);
@@ -128,81 +156,248 @@ const OrderTracking = () => {
     }
   };
 
+  const handleDeliveredClick = async () => {
+    try {
+      setIsUpdating(true);
+      setUpdateMessage('');
+
+      await axios.patch(
+        `https://ordermanagementservice.onrender.com/api/orders/${order._id}/update-status`,
+        { status: 'Delivered' }
+      );
+
+      setDelivered(true);
+      setUpdateMessage('Order successfully delivered!');
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      setUpdateMessage('Failed to update order status.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   if (!order || !driverLocation || (!restaurantLatLng && !pickedUp)) {
-    return <p className="text-center mt-8 text-red-500">No tracking data available.</p>;
+    return <p className="text-center mt-8 text-orange-500">No tracking data available.</p>;
   }
 
   return (
-    <div className="p-4 sm:p-6">
-      <h2 className="text-lg sm:text-xl font-bold mb-4 text-center">Your Order Tracking</h2>
+    <div className="bg-gray-50 min-h-screen">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-4 shadow-lg">
+        <h2 className="text-2xl font-bold text-white text-center">Order Tracking</h2>
+        <p className="text-white text-center text-sm opacity-80 mt-1">
+          {delivered ? 'Order delivered' : pickedUp ? 'Delivering to customer' : 'Heading to restaurant'}
+        </p>
+      </div>
 
-      {isLoaded && (
-        <div className="w-full h-[300px] sm:h-[400px] rounded overflow-hidden mb-6">
-          <GoogleMap
-            mapContainerStyle={containerStyle}
-            center={driverLocation}
-            zoom={14}
-          >
-            <Marker position={driverLocation} label="You" />
-            {!pickedUp && restaurantLatLng && (
-              <Marker position={restaurantLatLng} label="R" />
-            )}
-            {pickedUp && customerLatLng && (
-              <Marker position={customerLatLng} label="C" />
-            )}
-            {directions && (
-              <DirectionsRenderer
-                directions={directions}
-                options={{ suppressMarkers: true }}
+      {isLoaded && !delivered && (
+        <div className="p-4">
+          <div className="rounded-xl overflow-hidden shadow-lg border-2 border-orange-300 mb-4">
+            <GoogleMap
+              mapContainerStyle={containerStyle}
+              center={driverLocation}
+              zoom={14}
+              options={{
+                zoomControl: true,
+                streetViewControl: false,
+                mapTypeControl: false,
+                fullscreenControl: false,
+              }}
+            >
+              <Marker 
+                position={driverLocation} 
+                icon={{
+                  url: "https://maps.google.com/mapfiles/ms/icons/orange-dot.png",
+                  scaledSize: new window.google.maps.Size(40, 40),
+                }}
               />
-            )}
-          </GoogleMap>
+              {!pickedUp && restaurantLatLng && (
+                <Marker 
+                  position={restaurantLatLng} 
+                  label={{
+                    text: "R",
+                    color: "white"
+                  }}
+                  icon={{
+                    url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                    scaledSize: new window.google.maps.Size(40, 40),
+                  }}
+                />
+              )}
+              {customerLatLng && (
+                <Marker 
+                  position={customerLatLng}
+                  label={{
+                    text: "C",
+                    color: "white"
+                  }}
+                  icon={{
+                    url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                    scaledSize: new window.google.maps.Size(40, 40),
+                  }}
+                />
+              )}
+              {directions && (
+                <DirectionsRenderer
+                  directions={directions}
+                  options={{ 
+                    suppressMarkers: true,
+                    polylineOptions: {
+                      strokeColor: pickedUp ? "#3b82f6" : "#f97316",
+                      strokeWeight: 5
+                    }
+                  }}
+                />
+              )}
+            </GoogleMap>
+            <div className="bg-white p-3 flex items-center justify-between">
+              <div className="flex items-center text-orange-600">
+                <span className="text-xl mr-2">📍</span>
+                <span className="text-sm">Distance: {distance || 'Calculating...'}</span>
+              </div>
+              <div className="flex items-center text-orange-600">
+                <span className="text-xl mr-2">⏱️</span>
+                <span className="text-sm">ETA: {duration || 'Calculating...'}</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="p-4 sm:p-6 bg-white shadow-xl rounded-xl border border-gray-200">
-        <h3 className="text-lg sm:text-xl font-bold text-indigo-600 mb-4 border-b pb-2 text-center sm:text-left">
-          Order Summary
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm sm:text-base text-gray-700">
-          <div className="flex justify-between">
-            <span className="font-semibold text-gray-800">Order ID:</span>
-            <span className="text-right break-all">{order._id}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-semibold text-gray-800">Customer:</span>
-            <span className="text-right">{order.customerName}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-semibold text-gray-800">Customer Location:</span>
-            <span className="text-right">{order.userLocation}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-semibold text-gray-800">Restaurant:</span>
-            <span className="text-right">{order.resturantId}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-semibold text-gray-800">Estimated Time:</span>
-            <span className="text-right">{duration}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-semibold text-gray-800">Distance:</span>
-            <span className="text-right">{distance}</span>
+      {delivered && (
+        <div className="p-4">
+          <div className="rounded-xl overflow-hidden shadow-lg border-2 border-green-300 mb-4 bg-green-50 p-8 text-center">
+            <div className="mb-4">
+              <span className="text-5xl">✅</span>
+            </div>
+            <h3 className="text-xl font-bold text-green-700">
+              Order Successfully Delivered!
+            </h3>
+            <p className="text-green-600 mt-2">
+              Thank you for completing this delivery.
+            </p>
           </div>
         </div>
+      )}
 
-        {!pickedUp && (
-          <div className="mt-6 flex flex-col items-center">
-            <button
-              onClick={handlePickupClick}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg shadow w-full sm:w-auto"
-              disabled={isUpdating}
-            >
-              {isUpdating ? 'Updating...' : 'Pickup'}
-            </button>
-            {updateMessage && <p className="mt-2 text-sm text-green-600 text-center">{updateMessage}</p>}
+      <div className="px-4 pb-6">
+        <div className="p-4 bg-white shadow-lg rounded-xl border border-orange-200">
+          <h3 className="text-xl font-bold text-orange-600 mb-4 border-b border-orange-100 pb-2">
+            Order Summary
+          </h3>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
+            <div className="bg-orange-50 rounded-lg p-3">
+              <p className="text-xs font-medium text-orange-600">ORDER ID</p>
+              <p className="text-sm font-medium mt-1 truncate">{order._id}</p>
+            </div>
+            
+            <div className="bg-orange-50 rounded-lg p-3">
+              <p className="text-xs font-medium text-orange-600">CUSTOMER</p>
+              <p className="text-sm font-medium mt-1">{order.customerName}</p>
+            </div>
+
+            <div className="bg-orange-50 rounded-lg p-3">
+              <p className="text-xs font-medium text-orange-600">CUSTOMER NUMBER</p>
+              <p className="text-sm font-medium mt-1">{order.phone}</p>
+            </div>
+            <div className="bg-orange-50 rounded-lg p-3">
+              <p className="text-xs font-medium text-orange-600">PRICE</p>
+              <p className="text-sm font-medium mt-1">{order.price}</p>
+            </div>
+            
+            <div className="bg-orange-50 rounded-lg p-3">
+              <p className="text-xs font-medium text-orange-600">PICKUP</p>
+              <p className="text-sm font-medium mt-1 flex items-center">
+                <span className="text-lg mr-1">🍽️</span>
+                {order.resturantLocation}
+              </p>
+            </div>
+            
+            <div className="bg-orange-50 rounded-lg p-3">
+              <p className="text-xs font-medium text-orange-600">DELIVERY</p>
+              <p className="text-sm font-medium mt-1 flex items-center">
+                <span className="text-lg mr-1">📍</span>
+                {order.userLocation}
+              </p>
+            </div>
           </div>
-        )}
+
+          {!pickedUp && !delivered && (
+            <div className="mt-6 flex flex-col items-center">
+              <button
+                onClick={handlePickupClick}
+                className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md w-full sm:w-auto transition-colors flex items-center justify-center"
+                disabled={isUpdating}
+              >
+                {isUpdating ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Updating...
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    <span className="mr-2">🛵</span>
+                    Confirm Pickup
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
+          
+          {pickedUp && !delivered && (
+            <div className="mt-6 flex flex-col items-center">
+              <button
+                onClick={handleDeliveredClick}
+                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md w-full sm:w-auto transition-colors flex items-center justify-center"
+                disabled={isUpdating}
+              >
+                {isUpdating ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Updating...
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    <span className="mr-2">📦</span>
+                    Confirm Delivery
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
+          
+          {delivered && (
+            <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+              <p className="text-green-600 font-medium flex items-center justify-center">
+                <span className="text-xl mr-2">🎉</span>
+                Order successfully delivered! Status updated to "Delivered".
+              </p>
+            </div>
+          )}
+          
+          {updateMessage && !delivered && (
+            <p className="mt-3 text-sm text-green-600 text-center bg-green-50 px-4 py-2 rounded-full">
+              {updateMessage}
+            </p>
+          )}
+        </div>
+      </div>
+      
+      {/* Fixed Action Button */}
+      <div className="fixed bottom-4 right-4">
+        <button 
+          onClick={() => window.location.reload()}
+          className="bg-orange-500 text-white h-14 w-14 rounded-full shadow-lg flex items-center justify-center hover:bg-orange-600 transition-colors"
+        >
+          <span className="text-2xl">🔄</span>
+        </button>
       </div>
     </div>
   );

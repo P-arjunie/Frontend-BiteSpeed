@@ -1,38 +1,22 @@
-// import React from 'react';
-// import { useNavigate, Outlet } from 'react-router-dom';
-// import Sidebar from '../components/DashboardSideBar';
-
-// const DriverDashboard = () => {
-//   const navigate = useNavigate();
-
-//   const handleLogout = () => {
-//     localStorage.removeItem('token');
-//     navigate('/login-driver');
-//   };
-
-//   return (
-//     <div className="flex min-h-screen bg-gray-100">
-//       <Sidebar onLogout={handleLogout} />
-
-//       <div className="flex-1 p-10">
-//         <div >
-          
-//           <Outlet />
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default DriverDashboard;
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import DriverDashboardSidebar from '../components/DashboardSideBar';
 
 const DriverDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  
+  // Close sidebar when window resizes to desktop size
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) { // md breakpoint in Tailwind
+        setIsSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -48,26 +32,19 @@ const DriverDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
       {/* Sidebar */}
       <DriverDashboardSidebar 
-        onLogout={handleLogout} 
-        isSidebarOpen={isSidebarOpen} 
-        toggleSidebar={toggleSidebar} 
+        onLogout={handleLogout}
+        isSidebarOpen={isSidebarOpen}
+        toggleSidebar={toggleSidebar}
         closeSidebar={closeSidebar}
       />
 
-      {/* Dark Overlay */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-          onClick={closeSidebar}
-        />
-      )}
-
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-4">
+      <div className="flex-1 md:ml-0">
+        {/* Content padding for mobile navbar */}
+        <div className="pt-16 md:pt-0 px-4 md:px-8 py-6">
           <Outlet />
         </div>
       </div>
@@ -76,5 +53,3 @@ const DriverDashboard = () => {
 };
 
 export default DriverDashboard;
-
-
