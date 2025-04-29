@@ -1,14 +1,34 @@
-// src/pages/OrderSummary.jsx
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom'; // <-- useLocation hook for accessing location state
+import axios from 'axios';
 
 const OrderSummary = () => {
+  const location = useLocation(); // Access location state
+  const { restaurantId } = location.state || {}; // Extract restaurantId from state
+
   const [cartItems, setCartItems] = useState([]);
+  const [restaurant, setRestaurant] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
     setCartItems(storedCart);
-  }, []);
+
+    if (restaurantId) { // Check if restaurantId exists
+      const fetchRestaurantDetails = async () => {
+        try {
+          const response = await axios.get(`https://restaurant-management-service.onrender.com/api/restaurant/${restaurantId}`);
+          if (response.status === 200) {
+            setRestaurant(response.data);
+          }
+        } catch (error) {
+          console.error("Error fetching restaurant details:", error);
+        }
+      };
+
+      fetchRestaurantDetails();
+    }
+  }, [restaurantId]); // Fetch restaurant details when restaurantId changes
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const promotionDiscount = subtotal * 0.4;
@@ -16,50 +36,73 @@ const OrderSummary = () => {
   const serviceFee = 70;
   const total = subtotal - promotionDiscount + deliveryFee + serviceFee;
 
+  const handlePlaceOrder = async () => {
+    try {
+      for (const item of cartItems) {
+        const orderData = {
+          userId: "", // Fill user details
+          userLocation: "",
+          customerName: " ",
+          phone: "",
+          address: "",
+          email: "",
+          resturantId: restaurantId,
+          resturantLocation: restaurant ? restaurant.location : restaurant.address,
+          resturantDistance: restaurant ? restaurant.distance : { latitude: 0, longitude: 0 },
+          mealId: item.id,
+          itemName: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          totalPrice: total,
+          driverId: "",
+          driverLocation: "",
+          driverName: "",
+          status: "Pending"
+        };
+  
+        const response = await axios.post("https://ordermanagementservice.onrender.com/api/orders/", orderData);
+  
+        if (response.status === 200 || response.status === 201) {
+          console.log("Order placed successfully for:", item.name);
+        }
+      }
+  
+      alert("All orders placed successfully!");
+      setTimeout(() => {
+        navigate('/payment', { state: { cartItems: cartItems } });
+      }, 100);
+  
+    } catch (error) {
+      console.error("There was an error placing the order:", error);
+      alert("Error placing order. Please try again.");
+    }
+  };
+  
+  
+
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 text-sm">
-      {/* Header */}
-      <header className="w-full bg-white py-2 px-4 shadow-sm">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
+        
+      <div className="w-full bg-white py-2 px-4 shadow-sm">
+      <div className="flex items-center justify-between max-w-4xl mx-auto">
           <div className="flex items-center space-x-2">
             <img
-              src="/path-to-cafe-image.jpg"
-              alt="Cafe Logo"
+              src={restaurant ? restaurant.image : "/path-to-placeholder-image.jpg"}
+              alt="Restaurant Logo"
               className="w-10 h-10 rounded-full object-cover"
             />
             <div>
-              <h1 className="text-base font-bold text-gray-800">Hogwarts Cafe</h1>
-              <p className="text-xs text-gray-500">213/2 Kandy road kiribathgoda</p>
+              <h1 className="text-base font-bold text-gray-800">{restaurant ? restaurant.name : "Loading..."}</h1>
+              <p className="text-xs text-gray-500">{restaurant ? restaurant.address : "Loading address..."}</p>
             </div>
           </div>
         </div>
-      </header>
-
-      {/* Promotion Banner */}
-      <div className="bg-yellow-100 text-center py-2 px-4 mt-3 mx-3 rounded-lg shadow-sm flex items-center justify-between">
-        <div className="text-left">
-          <h2 className="text-sm font-semibold text-gray-800">Save LKR 99.00 on this order</h2>
-          <p className="text-xs text-gray-600">Get yours now</p>
-        </div>
-        <img
-          src="/path-to-burger-image.jpg"
-          alt="Promotion"
-          className="w-12 h-12 rounded-full object-cover"
-        />
       </div>
 
-      {/* Place Order Button */}
-      <div className="mt-4 mx-3">
-        <button className="w-full bg-black text-white py-3 rounded-lg text-base font-semibold hover:bg-gray-800 transition">
-          Place Order
-        </button>
-      </div>
-
-      {/* Cart Summary */}
       <div className="mt-4 mx-3 bg-white p-4 rounded-xl shadow-sm">
         <h2 className="text-lg font-bold mb-3 text-gray-700">Cart ({cartItems.length})</h2>
 
-        {/* Items */}
         <div className="flex flex-col gap-2">
           {cartItems.map((item) => (
             <div key={item.id} className="flex justify-between text-gray-700">
@@ -70,13 +113,6 @@ const OrderSummary = () => {
         </div>
       </div>
 
-      {/* Promotion */}
-      <div className="mt-3 mx-3 bg-white p-4 rounded-xl shadow-sm">
-        <h3 className="text-md font-semibold text-gray-700 mb-1">Promotion</h3>
-        <p className="text-xs text-green-600 font-medium">Promotion applied: 40% off</p>
-      </div>
-
-      {/* Order Total */}
       <div className="mt-3 mx-3 bg-white p-4 rounded-xl shadow-sm mb-10">
         <h2 className="text-lg font-bold text-gray-700 mb-3">Order Total</h2>
 
@@ -102,6 +138,22 @@ const OrderSummary = () => {
           <span>LKR {total.toFixed(2)}</span>
         </div>
       </div>
+
+      {/* Display restaurantId below total */}
+      <div className="mt-2 mx-3 bg-white p-4 rounded-xl shadow-sm">
+        <h3 className="text-sm text-gray-600">Restaurant ID: {restaurantId}</h3>
+      </div>
+
+      <div className="mt-4 mx-3">
+        <button
+          className="w-full bg-black text-white py-3 rounded-lg text-base font-semibold hover:bg-gray-800 transition"
+          onClick={handlePlaceOrder}
+        >
+          Place Order
+        </button>
+      </div>
+
+      
     </div>
   );
 };

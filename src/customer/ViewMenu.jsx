@@ -333,7 +333,7 @@ const ViewMenu = () => {
                   <div className="text-right whitespace-nowrap">
                     <p className="text-lg font-bold text-orange-800">Rs. {item.price}</p>
                     <button
-                      onClick={() => navigate("/basket", { state: { item } })}
+                      onClick={() => navigate("/basket", { state: { item, restaurantId: item.restaurantId } })}
                       className="mt-3 px-4 py-1.5 rounded-full bg-orange-500 text-white font-semibold hover:bg-orange-600 transition"
                     >
                       Order
