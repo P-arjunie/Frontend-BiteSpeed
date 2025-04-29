@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import food1 from '../assets/food1.jpg';
+import Navbar from '../components/Navbar';
 
 const CustomerProfile = () => {
   const [profileData, setProfileData] = useState(null);
@@ -56,9 +57,9 @@ const CustomerProfile = () => {
     localStorage.removeItem('userEmail');
     navigate('/login');
   };
-  
+  //
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen overflow-hidden">
       {/* Full-page background image with overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -67,6 +68,8 @@ const CustomerProfile = () => {
           filter: 'brightness(0.4)'
         }}
       />
+      <Navbar />
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
       
       {/* Content container */}
       <div className={`container mx-auto px-4 py-8 z-10 transition-opacity duration-1000 ${pageVisible ? 'opacity-100' : 'opacity-0'}`}>
@@ -174,21 +177,6 @@ const CustomerProfile = () => {
             </div>
           </div>
           
-          {/* Action buttons */}
-          <div className="mt-8 flex justify-center">
-            <Link 
-              to="/customer-dashboard" 
-              className="px-6 py-3 bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm text-white rounded-xl hover:bg-opacity-30 transition duration-200 font-bold text-lg shadow-md mx-2"
-            >
-              Back to Dashboard 🏠
-            </Link>
-            <Link 
-              to="/order-history" 
-              className="px-6 py-3 bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm text-white rounded-xl hover:bg-opacity-30 transition duration-200 font-bold text-lg shadow-md mx-2"
-            >
-              Order History 📋
-            </Link>
-          </div>
         </div>
       </div>
       
@@ -198,6 +186,7 @@ const CustomerProfile = () => {
         <span className="text-4xl animate-bounce" style={{ animationDelay: '0.2s' }}>🍣</span>
         <span className="text-4xl animate-bounce" style={{ animationDelay: '0.4s' }}>🍰</span>
       </div>
+    </div>
     </div>
   );
 };
