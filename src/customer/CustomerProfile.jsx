@@ -68,7 +68,7 @@ const CustomerProfile = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userEmail');
-    navigate('/login');
+    navigate('/');
   };
 
   const handleInputChange = (e) => {
