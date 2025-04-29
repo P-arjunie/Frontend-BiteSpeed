@@ -1,4 +1,4 @@
-
+import BiteSpeedHomePage from './customer/LandingPage'
 import AdminDashboard from './admin/OrdersChart'
 import CustomerOrderTracking from './customer/CustomerOrderTrcking'
 import CustomerLoginForm from './customer/CustomerLoginForm'
@@ -64,6 +64,7 @@ function App() {
 
 
         {/* Route for customer */}
+        <Route path="/" element={<BiteSpeedHomePage />} />
         <Route path="/customer-login" element={<CustomerLoginForm />} />
         <Route path="/customer-register" element={<CustomerRegisterForm />} />
         <Route path="/customer-profile" element={<CustomerProfile />} />
