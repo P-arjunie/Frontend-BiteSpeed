@@ -1,3 +1,6 @@
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 import AdminDashboard from './admin/OrdersChart'
 import CustomerOrderTracking from './customer/CustomerOrderTrcking'
@@ -53,6 +56,7 @@ import OrderSummary from './order/OrderSummary'
 
 function App() {
   return (
+    
     <Router>
       <Routes>
         <Route path="/register-driver" element={<DriverRegisterForm />} />
@@ -97,6 +101,7 @@ function App() {
         <Route path="/orderDetails" element={<OrdersTable />} />
         <Route path="/basket" element={<BasketPage />} />
         <Route path="/OrderSummary" element={<OrderSummary />} />
+       
         
       </Routes>
     </Router>
