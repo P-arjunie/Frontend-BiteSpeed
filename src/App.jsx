@@ -1,4 +1,6 @@
+
 import BiteSpeedHomePage from './customer/LandingPage'
+
 import AdminDashboard from './admin/OrdersChart'
 import CustomerOrderTracking from './customer/CustomerOrderTrcking'
 import CustomerLoginForm from './customer/CustomerLoginForm'
@@ -53,6 +55,7 @@ import OrderSummary from './order/OrderSummary'
 
 function App() {
   return (
+    
     <Router>
       <Routes>
         <Route path="/register-driver" element={<DriverRegisterForm />} />
@@ -98,6 +101,7 @@ function App() {
         <Route path="/orderDetails" element={<OrdersTable />} />
         <Route path="/basket" element={<BasketPage />} />
         <Route path="/OrderSummary" element={<OrderSummary />} />
+       
         
       </Routes>
     </Router>
