@@ -71,7 +71,7 @@ const BasketPage = () => {
     };
 
     try {
-      const response = await fetch('http://localhost:3000/api/cart/add', {
+      const response = await fetch('https://ordermanagementservice.onrender.com/api/cart/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

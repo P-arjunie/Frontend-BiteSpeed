@@ -17,7 +17,7 @@ const CartPage = () => {
 
     const fetchCartItems = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/api/cart/user/${userId}`, {
+        const response = await fetch(`https://ordermanagementservice.onrender.com/api/cart/user/${userId}`, {
           headers: {
             'Authorization': localStorage.getItem('token'),
             'Content-Type': 'application/json',
@@ -40,7 +40,7 @@ const CartPage = () => {
 
   const handleRemoveItem = async (itemId) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/cart/${itemId}`, {
+      const response = await fetch(`https://ordermanagementservice.onrender.com/api/cart/${itemId}`, {
         method: 'DELETE',
       });
       if (!response.ok) {
@@ -66,7 +66,7 @@ const CartPage = () => {
     const updatedItem = updatedCart.find(item => item._id === itemId);
 
     try {
-      await fetch(`http://localhost:3000/api/cart/${itemId}`, {
+      await fetch(`https://ordermanagementservice.onrender.com/api/cart/${itemId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quantity: updatedItem.quantity, price: updatedItem.price }),
