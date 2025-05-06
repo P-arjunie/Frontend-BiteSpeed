@@ -1,6 +1,5 @@
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 
+import BiteSpeedHomePage from './customer/LandingPage'
 
 import AdminDashboard from './admin/OrdersChart'
 import CustomerOrderTracking from './customer/CustomerOrderTrcking'
@@ -68,6 +67,7 @@ function App() {
 
 
         {/* Route for customer */}
+        <Route path="/" element={<BiteSpeedHomePage />} />
         <Route path="/customer-login" element={<CustomerLoginForm />} />
         <Route path="/customer-register" element={<CustomerRegisterForm />} />
         <Route path="/customer-profile" element={<CustomerProfile />} />

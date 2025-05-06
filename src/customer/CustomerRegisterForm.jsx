@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import food1 from '../assets/food1.jpg'; // You can use your food image here
+import Header from '../components/Header';
 
 const CustomerRegisterForm = () => {
   const [formData, setFormData] = useState({
@@ -47,7 +48,7 @@ const CustomerRegisterForm = () => {
   
   return (
     <div className="min-h-screen relative">
-      {/* Simplified background */}
+      {/* Full-page background image with overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
@@ -56,8 +57,13 @@ const CustomerRegisterForm = () => {
         }}
       />
       
+      {/* Header at the top */}
+      <div className="relative z-20">
+        <Header isScrolled={true} />
+      </div>
+      
       {/* Main container */}
-      <div className="container mx-auto px-4 py-10 relative z-10">
+      <div className="container mx-auto px-4 py-10 relative z-10 pt-24">
         <div className="max-w-3xl mx-auto bg-white bg-opacity-95 rounded-lg shadow-lg overflow-hidden">
           
           {/* Header */}
@@ -94,10 +100,17 @@ const CustomerRegisterForm = () => {
                 
                 <div className="bg-gray-800 p-4 rounded-lg">
                   <h3 className="text-lg font-bold text-white mb-2">Already a member?</h3>
-                  <Link to="/login-customer" className="block text-center py-2 px-4 bg-orange-500 hover:bg-orange-600 rounded-lg font-medium">
+                  <Link to="/customer-login" className="block text-center py-2 px-4 bg-orange-500 hover:bg-orange-600 rounded-lg font-medium">
                     LOG IN HERE
                   </Link>
                 </div>
+
+                <Link to="/register-driver" className="block text-center py-2 px-4 bg-orange-400 hover:bg-orange-500 rounded-lg font-medium text-black">
+                Register as a Driver
+                </Link>
+                <Link to="/register-restaurant" className="block text-center py-2 px-4 bg-orange-400 hover:bg-orange-500 rounded-lg font-medium text-black">
+                Register as a Restaurant
+                </Link>
               </div>
             </div>
             

@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import food1 from '../assets/food1.jpg';
+import { jwtDecode } from "jwt-decode";
+import Header from '../components/Header';
 
 const CustomerLoginForm = () => {
   const [formData, setFormData] = useState({
@@ -28,7 +30,7 @@ const CustomerLoginForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('https://auth-service-2-4xm3.onrender.com/api/auth/login', {
+      const res = await fetch('https://customer-service-lqm4.onrender.com/api/customers/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -38,9 +40,17 @@ const CustomerLoginForm = () => {
       if (res.ok && result.token) {
         console.log("Token:", result.token);
         localStorage.setItem('token', result.token);
-        localStorage.setItem('userEmail', formData.email); // Store email for profile fetching
+        localStorage.setItem('userEmail', formData.email);
+        
+        // Decode the token and check the role
+        const decodedToken = jwtDecode(result.token);
+        if (decodedToken.role === 'admin') {
+          navigate('/admin-graph');
+        } else {
+          navigate('/customer-home');
+        }
+        
         setMessage("Login successful!");
-        navigate('/customer-home'); // Change to your customer dashboard route
       } else {
         setMessage(result.message || "Oops! Login failed. Try again?");
       }
@@ -50,7 +60,7 @@ const CustomerLoginForm = () => {
   };
   
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden">
       {/* Full-page background image with overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -60,21 +70,16 @@ const CustomerLoginForm = () => {
         }}
       />
       
-      {/* Content container */}
-      <div className={`container mx-auto px-4 py-8 z-10 transition-opacity duration-1000 ${formVisible ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="max-w-4xl mx-auto">
-          {/* Hero text */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">Where Food Adventures Begin!</h1>
-            <div className="flex justify-center gap-4 mt-2">
-              <span className="text-3xl">🍕</span>
-              <span className="text-3xl">🍔</span>
-              <span className="text-3xl">🌮</span>
-              <span className="text-3xl">🍜</span>
-            </div>
-          </div>
-          
-          {/* Login form */}
+      {/* Header at the top */}
+      <div className="relative z-20">
+        <Header isScrolled={true} />
+      </div>
+      
+      {/* Main content wrapper */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen pt-20">
+        
+        {/* Login form */}
+        <div className={`transition-opacity duration-1000 ${formVisible ? 'opacity-100' : 'opacity-0'}`}>
           <div className="bg-white bg-opacity-95 backdrop-filter backdrop-blur-sm rounded-2xl shadow-2xl p-8 border-t-4 border-orange-500 max-w-md mx-auto transform hover:scale-102 transition-transform duration-300">
             <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-xl mb-6 text-center">
               <h2 className="text-2xl font-bold">Ready to Order? 😋</h2>
@@ -138,7 +143,7 @@ const CustomerLoginForm = () => {
       </div>
       
       {/* Floating food icons */}
-      <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-8 text-white text-opacity-70">
+      <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-8 text-white text-opacity-70 z-10">
         <span className="text-4xl animate-bounce">🥗</span>
         <span className="text-4xl animate-bounce" style={{ animationDelay: '0.2s' }}>🍣</span>
         <span className="text-4xl animate-bounce" style={{ animationDelay: '0.4s' }}>🍰</span>
