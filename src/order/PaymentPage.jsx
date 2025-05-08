@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { CreditCard, Home, Package, User, Lock, Check } from 'lucide-react';
+import { CreditCard, Home, Package, User, Lock, Check, X } from 'lucide-react';
 
 const PaymentPage = () => {
   const location = useLocation();
@@ -17,6 +17,8 @@ const PaymentPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [error, setError] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -72,6 +74,10 @@ const PaymentPage = () => {
     setIsProcessing(true);
     setError('');
     
+    // Show processing toast
+    setToastMessage('Processing your payment...');
+    setShowToast(true);
+    
     try {
       // Prepare payment data to send to backend
       const paymentData = {
@@ -82,8 +88,11 @@ const PaymentPage = () => {
         cvv: paymentInfo.cvv
       };
       
+      // Add a simulated delay of 10 seconds to show the processing toast
+      await new Promise(resolve => setTimeout(resolve, 10000));
+      
       // Send payment data to backend API
-      const response = await fetch('http://localhost:3003/api/payment', {
+      const response = await fetch('https://paymentservicebackend.onrender.com/api/payments/payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,15 +106,33 @@ const PaymentPage = () => {
       
       const data = await response.json();
       
+      // Update toast message for success
+      setToastMessage('Payment processed successfully!');
+      
       // Payment successful
       setIsProcessing(false);
       setIsComplete(true);
     } catch (error) {
       setIsProcessing(false);
       setError(error.message || 'Something went wrong. Please try again.');
+      
+      // Update toast for error
+      setToastMessage('Payment failed. Please try again.');
+      setShowToast(true);
+      
       console.error('Payment error:', error);
     }
   };
+
+  // Handle toast timeout - longer for processing state
+  useEffect(() => {
+    if (showToast && !isProcessing) {
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast, isProcessing]);
 
   if (isComplete) {
     return (
@@ -127,7 +154,30 @@ const PaymentPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 relative">
+      {/* Toast Notification */}
+      {showToast && (
+        <div className={`fixed top-4 right-4 z-50 ${isProcessing ? 'bg-green-500' : error ? 'bg-red-500' : 'bg-green-500'} text-white px-4 py-3 rounded-lg shadow-lg flex items-center transition-all duration-300 ease-in-out`}>
+          {isProcessing ? (
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          ) : error ? (
+            <X className="mr-2" size={18} />
+          ) : (
+            <Check className="mr-2" size={18} />
+          )}
+          <span>{toastMessage}</span>
+          <button 
+            onClick={() => setShowToast(false)}
+            className="ml-3 text-white hover:text-gray-200"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+      
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
@@ -230,7 +280,7 @@ const PaymentPage = () => {
                   <input
                     type="text"
                     name="name"
-                    placeholder="John Smith"
+                    placeholder="(ex:)John Smith"
                     value={paymentInfo.name}
                     onChange={handleInputChange}
                     required
@@ -243,7 +293,7 @@ const PaymentPage = () => {
                   <input
                     type="text"
                     name="cardNumber"
-                    placeholder="1234 5678 9012 3456"
+                    placeholder="xxxx xxxx xxx xxxx"
                     value={paymentInfo.cardNumber}
                     onChange={handleCardNumberChange}
                     maxLength={19}
@@ -271,7 +321,7 @@ const PaymentPage = () => {
                     <input
                       type="text"
                       name="cvv"
-                      placeholder="123"
+                      placeholder="---"
                       value={paymentInfo.cvv}
                       onChange={handleInputChange}
                       maxLength={4}
