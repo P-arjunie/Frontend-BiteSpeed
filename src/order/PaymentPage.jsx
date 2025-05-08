@@ -156,7 +156,7 @@ const PaymentPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 relative">
       {/* Toast Notification */}
-      {showToast && (
+      {/* {showToast && (
         <div className={`fixed top-4 right-4 z-50 ${isProcessing ? 'bg-green-500' : error ? 'bg-red-500' : 'bg-green-500'} text-white px-4 py-3 rounded-lg shadow-lg flex items-center transition-all duration-300 ease-in-out`}>
           {isProcessing ? (
             <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -176,7 +176,7 @@ const PaymentPage = () => {
             <X size={16} />
           </button>
         </div>
-      )}
+      )} */}
       
       {/* Header */}
       <header className="bg-white shadow-sm">
