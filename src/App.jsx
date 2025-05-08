@@ -52,11 +52,15 @@ import OrderSummary from './order/OrderSummary'
 
 // This is the default content shown at /dashboard
 
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
     
     <Router>
+      <>
+      <ToastContainer />
       <Routes>
         <Route path="/register-driver" element={<DriverRegisterForm />} />
         <Route path="/login-driver" element={<DriverLoginForm />} />
@@ -104,6 +108,7 @@ function App() {
        
         
       </Routes>
+      </>
     </Router>
   );
 }
