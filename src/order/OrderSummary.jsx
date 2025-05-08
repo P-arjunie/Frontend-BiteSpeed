@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaUser, FaStore, FaShoppingBag, FaCheck, FaArrowLeft } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 
 const OrderSummary = () => {
   const location = useLocation();
@@ -88,11 +89,15 @@ const OrderSummary = () => {
     try {
       const res = await axios.post("https://ordermanagementservice.onrender.com/api/orders/", orderData);
       if (res.status === 200 || res.status === 201) {
-        alert("Procced Your Payment..!");
+       toast.success("Proceed Your Payment!", {
+    position: "top-right",
+    autoClose: 3000,
+    theme: "colored",
+  });
         // Pass the total price to the payment page
         navigate('/payment', { 
           state: { 
-            totalAmount: total,
+            totalPrice: total,
             cartItems: [cartItem] // Pass the cart item as well
           } 
         });
