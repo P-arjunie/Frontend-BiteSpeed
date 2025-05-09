@@ -1,163 +1,226 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
+import { FaTrashAlt, FaShoppingCart, FaMinus, FaPlus, FaArrowLeft } from 'react-icons/fa'; // Import icons
 
 const CartPage = () => {
   const location = useLocation();
-  const { cartItems: initialCartItems, restaurantId } = location.state || {};  // Get cartItems and restaurantId from location state
+  const { userId } = location.state || {};  // Get userId from location state
 
-  const [cartItems, setCartItems] = useState(initialCartItems || []);
+  const [cartItems, setCartItems] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
-    setCartItems(storedCart);
-  }, []);
+    if (!userId) {
+      setError("User ID not provided");
+      return;
+    }
 
-  const handleRemoveItem = (itemId) => {
-    const updatedCart = cartItems.filter(item => item.id !== itemId);
-    setCartItems(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    const fetchCartItems = async () => {
+      try {
+        const response = await fetch(`https://ordermanagementservice.onrender.com/api/cart/user/${userId}`, {
+          headers: {
+            'Authorization': localStorage.getItem('token'),
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch cart items');
+        }
+
+        const data = await response.json();
+        setCartItems(data);
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+
+    fetchCartItems();
+  }, [userId]);
+
+  const handleRemoveItem = async (itemId) => {
+    try {
+      const response = await fetch(`https://ordermanagementservice.onrender.com/api/cart/${itemId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete cart item");
+      }
+
+      const updatedCart = cartItems.filter(item => item._id !== itemId);
+      setCartItems(updatedCart);
+    } catch (error) {
+      console.error("Error deleting cart item:", error);
+    }
   };
 
-  const handleQuantityChange = (itemId, type) => {
+  const handleQuantityChange = async (itemId, type) => {
     const updatedCart = cartItems.map(item => {
-      if (item.id === itemId) {
+      if (item._id === itemId) {
         const newQuantity = type === 'inc' ? item.quantity + 1 : Math.max(1, item.quantity - 1);
-        return { ...item, quantity: newQuantity };
+        return { ...item, quantity: newQuantity, totalPrice: newQuantity * item.price };
       }
       return item;
     });
-    setCartItems(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
+
+    const updatedItem = updatedCart.find(item => item._id === itemId);
+
+    try {
+      await fetch(`https://ordermanagementservice.onrender.com/api/cart/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: updatedItem.quantity, price: updatedItem.price }),
+      });
+
+      setCartItems(updatedCart);
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+    }
   };
 
   const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="w-full bg-black text-white py-4 px-6 rounded-xl mb-8 shadow-lg z-10 relative">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl md:text-3xl font-bold text-orange-500">🍴 BiteSpeed</h1>
-          <nav className="space-x-4 hidden sm:block">
-            <Link to="/customer-home" className="text-orange-400 font-semibold underline">Home</Link>
-            <Link to="/orders" className="hover:text-orange-400">My Orders</Link>
-            <Link to="/profile" className="hover:text-orange-400">Profile</Link>
-          </nav>
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <FaShoppingCart className="text-white text-2xl" />
+              <h1 className="text-2xl font-bold text-white">Your Cart</h1>
+            </div>
+            <Link 
+              to="/customer-home" 
+              className="flex items-center text-white hover:text-orange-100 transition-colors"
+            >
+              <FaArrowLeft className="mr-2" />
+              <span>Continue Shopping</span>
+            </Link>
+          </div>
         </div>
-      </header>
-
-      <div className="max-w-5xl mx-auto p-6">
-        <h2 className="text-2xl font-bold mb-6 text-orange-700">🛒 Your Cart</h2>
-
-        {cartItems.length === 0 ? (
-          <div className="text-center text-gray-600">Your cart is empty</div>
-        ) : (
-          <div className="flex flex-col gap-8">
-            {cartItems.map(item => (
-              <div key={item.id} className="flex flex-col md:flex-row gap-8 bg-white p-6 rounded-xl shadow-md">
-                
-                {/* Left Side - Image */}
-                {item.image && (
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-full md:w-72 h-60 object-cover rounded-xl shadow-sm"
-                  />
-                )}
-
-                {/* Right Side - Details */}
-                <div className="flex-1 flex flex-col justify-between">
-                  <div className="space-y-3">
-                    <h3 className="text-xl font-bold text-orange-800">{item.name}</h3>
-                    <p className="text-sm text-gray-600">{item.description}</p>
-                    <p className="text-sm text-gray-500">
-                      <span className="font-semibold text-orange-600">Available:</span> {item.isAvailable ? 'No':'Yes'}
-                    </p>
-                    
-                    <p className="text-lg font-bold text-orange-700">
-                      Rs. {item.price}
-                    </p>
-                   
-                  </div>
-
-                  {/* Quantity Controls and Item Total */}
-                  <div className="mt-6 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <button
-                        onClick={() => handleQuantityChange(item.id, 'dec')}
-                        className="px-3 py-1 bg-gray-200 rounded-full"
-                      >
-                        -
-                      </button>
-                      <span className="text-lg">{item.quantity}</span>
-                      <button
-                        onClick={() => handleQuantityChange(item.id, 'inc')}
-                        className="px-3 py-1 bg-gray-200 rounded-full"
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    <div className="text-right font-bold text-lg text-orange-700">
-                      Total: Rs. {(item.price * item.quantity).toFixed(2)}
-                    </div>
-                  </div>
-
-                  {/* Remove Button */}
-                  <button
-                    onClick={() => handleRemoveItem(item.id)}
-                    className="mt-4 text-red-600 hover:underline"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Grand Total */}
-        {cartItems.length > 0 && (
-          <div className="text-right font-bold text-lg text-orange-700 mt-6">
-            Grand Total: Rs. {total.toFixed(2)}
-          </div>
-        )}
-
-        {/* Proceed to Payment */}
-        {cartItems.length > 0 && (
-          <Link to="/OrderSummary" state={{ restaurantId }} className="block">
-            <button className="w-full py-2 mt-6 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-              View Summary
-            </button>
-          </Link>
-        )}
       </div>
 
-      {/* Footer */}
-      <footer className="mt-auto bg-black text-white rounded-xl shadow-lg px-6 py-8 z-10 relative mx-7.5 mb-7.5">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          {/* Brand Section */}
-          <div className="text-center md:text-left">
-            <h2 className="text-2xl font-semibold text-orange-400">🍴 FoodieExpress</h2>
-            <p className="text-sm mt-2 text-gray-300">Delivering deliciousness to your door since 2025.</p>
+      <div className="max-w-6xl mx-auto p-6">
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded mb-6">
+            <p className="text-red-700">{error}</p>
           </div>
-      
-          {/* Navigation Section */}
-          <div className="flex space-x-6 text-lg">
-            <Link to="/customer-home" className="hover:text-orange-400">Home</Link>
-            <Link to="/orders" className="hover:text-orange-400">My Orders</Link>
-            <Link to="/profile" className="hover:text-orange-400">Profile</Link>
-            <Link to="/about" className="hover:text-orange-400">About Us</Link>
-            <Link to="/contact" className="hover:text-orange-400">Contact</Link>
-          </div>
-        </div>
+        )}
 
-        {/* Footer Text Section */}
-        <div className="mt-8 border-t border-gray-700 pt-6 text-center text-lg text-gray-400">
-          <p className="text-lg">© 2025 FoodieExpress. All rights reserved.</p>
-          <p className="mt-2 text-sm">Made with 🍲 by the FoodieExpress Dev Team</p>
-        </div>
-      </footer>
+        {cartItems.length === 0 && !error && (
+          <div className="text-center py-16 bg-gray-50 rounded-lg shadow-sm border border-gray-100">
+            <FaShoppingCart className="mx-auto text-5xl text-orange-300 mb-4" />
+            <p className="text-gray-600 text-xl mb-6">Your cart is empty</p>
+            <Link to="/customer-home">
+              <button className="bg-orange-500 hover:bg-orange-600 text-white py-3 px-8 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300">
+                Start Shopping
+              </button>
+            </Link>
+          </div>
+        )}
+
+        {cartItems.length > 0 && (
+          <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+                <div className="px-6 py-4 bg-orange-50 border-b border-gray-100">
+                  <h2 className="font-semibold text-lg text-orange-800">Shopping Cart</h2>
+                  <p className="text-sm text-gray-500">{cartItems.length} item{cartItems.length !== 1 ? 's' : ''}</p>
+                </div>
+                
+                <div className="divide-y divide-gray-100">
+                  {cartItems.map((item) => (
+                    <div key={item._id} className="p-6 hover:bg-orange-50 transition-colors duration-150">
+                      <div className="flex flex-col sm:flex-row gap-5">
+                        <div className="relative flex-shrink-0">
+                          <img
+                            src={item.image}
+                            alt={item.itemName}
+                            className="w-24 h-24 object-cover rounded-lg shadow-sm border border-gray-200"
+                          />
+                        </div>
+
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-800">{item.itemName}</h3>
+                          <p className="text-orange-600 font-medium mt-1">Rs. {item.price}</p>
+                        </div>
+
+                        <div className="flex flex-col sm:items-end gap-3">
+                          <div className="flex items-center border border-gray-200 rounded-full">
+                            <button
+                              onClick={() => handleQuantityChange(item._id, 'dec')}
+                              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                            >
+                              <FaMinus className="text-xs text-orange-500" />
+                            </button>
+                            <span className="px-4 font-medium text-gray-700">{item.quantity}</span>
+                            <button
+                              onClick={() => handleQuantityChange(item._id, 'inc')}
+                              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                            >
+                              <FaPlus className="text-xs text-orange-500" />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-4 mt-2">
+                            <button
+                              onClick={() => handleRemoveItem(item._id)}
+                              className="text-gray-400 hover:text-red-500 transition-colors"
+                              title="Remove item"
+                            >
+                              <FaTrashAlt />
+                            </button>
+                            
+                            <span className="font-bold text-gray-800">
+                              Rs. {(item.price * item.quantity).toFixed(2)}
+                            </span>
+
+                            <Link
+                              to="/ordersummary"
+                              state={{ cartItem: item, restaurantId: item.restaurantId }}
+                            >
+                              <button className="py-2 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-all duration-300 shadow-sm hover:shadow-md">
+                                Checkout
+                              </button>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Order Summary */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-xl shadow-md border border-gray-100 sticky top-6">
+                <div className="px-6 py-4 bg-orange-50 border-b border-gray-100">
+                  <h2 className="font-semibold text-lg text-orange-800">Order Summary</h2>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-3 mb-6">
+                    <div className="flex justify-between text-gray-600">
+                      <span>Subtotal</span>
+                      <span>Rs. {total.toFixed(2)}</span>
+                    </div>
+                   
+                    <div className="border-t border-gray-100 pt-3 mt-3">
+                      <div className="flex justify-between font-semibold text-lg">
+                        <span>Total</span>
+                        <span className="text-orange-600">Rs. {(total).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,4 +1,6 @@
+
 import BiteSpeedHomePage from './customer/LandingPage'
+
 import AdminDashboard from './admin/OrdersChart'
 import CustomerOrderTracking from './customer/CustomerOrderTrcking'
 import CustomerLoginForm from './customer/CustomerLoginForm'
@@ -50,10 +52,15 @@ import OrderSummary from './order/OrderSummary'
 
 // This is the default content shown at /dashboard
 
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
+    
     <Router>
+      <>
+      <ToastContainer />
       <Routes>
         <Route path="/register-driver" element={<DriverRegisterForm />} />
         <Route path="/login-driver" element={<DriverLoginForm />} />
@@ -98,8 +105,10 @@ function App() {
         <Route path="/orderDetails" element={<OrdersTable />} />
         <Route path="/basket" element={<BasketPage />} />
         <Route path="/OrderSummary" element={<OrderSummary />} />
+       
         
       </Routes>
+      </>
     </Router>
   );
 }

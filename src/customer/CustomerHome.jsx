@@ -291,6 +291,7 @@ const CustomerHome = () => {
     autoplay: true,
     autoplaySpeed: 5000,
   };
+  
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden p-4 md:p-6 flex flex-col justify-between">
@@ -309,6 +310,9 @@ const CustomerHome = () => {
             </Link>
             <Link to="/orders" className="hover:text-orange-400">
               My Orders
+            </Link>
+            <Link to="/cart" className="hover:text-orange-400">
+              cart
             </Link>
             <Link to="/customer-profile" className="hover:text-orange-400">
               Profile
