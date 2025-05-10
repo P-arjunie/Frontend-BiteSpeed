@@ -201,7 +201,7 @@ const PaymentPage = () => {
               <Package size={18} className="mr-1" />
               <span>Orders</span>
             </Link>
-            <Link to="/profile" className="flex items-center text-gray-600 hover:text-orange-500">
+            <Link to="/customer-profile" className="flex items-center text-gray-600 hover:text-orange-500">
               <User size={18} className="mr-1" />
               <span>Profile</span>
             </Link>
