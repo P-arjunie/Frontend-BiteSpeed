@@ -6,6 +6,7 @@ const PaymentPage = () => {
   const location = useLocation();
   const cartItems = location.state?.cartItems || [];
   const totalPrice = location.state?.totalPrice || 0;
+  const orderId = location.state?.orderId || ""; // Get the passed order ID
 
   const [paymentInfo, setPaymentInfo] = useState({
     name: '',
@@ -85,7 +86,8 @@ const PaymentPage = () => {
         name: paymentInfo.name,
         cardNumber: paymentInfo.cardNumber.replace(/\s/g, ''), // Remove spaces
         expiryDate: paymentInfo.expiryDate,
-        cvv: paymentInfo.cvv
+        cvv: paymentInfo.cvv,
+        orderId: orderId // Include the order ID in the payment data
       };
       
       // Add a simulated delay of 10 seconds to show the processing toast
@@ -142,14 +144,15 @@ const PaymentPage = () => {
             <Check className="text-green-500" size={32} />
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h2>
-          <p className="text-gray-600 mb-6">Your payment of ${totalPrice.toFixed(2)} has been processed successfully.</p>
+          <p className="text-gray-600 mb-2">Your payment of ${totalPrice.toFixed(2)} has been processed successfully.</p>
+         
           <Link to="/customer-home">
             <button className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition font-medium">
               Return to Home
             </button>
             <br/><br/>
           </Link>
-          <Link to="/customer-order_tracking">
+          <Link to={`/customer-order_tracking?orderId=${orderId}`}>
             <button className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition font-medium">
               Customer Order Tracking
             </button>
@@ -161,29 +164,25 @@ const PaymentPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
-      {/* Toast Notification */}
+      {/* Toast notification */}
       {/* {showToast && (
-        <div className={`fixed top-4 right-4 z-50 ${isProcessing ? 'bg-green-500' : error ? 'bg-red-500' : 'bg-green-500'} text-white px-4 py-3 rounded-lg shadow-lg flex items-center transition-all duration-300 ease-in-out`}>
+        <div className="fixed top-4 right-4 z-50 bg-white shadow-lg rounded-lg p-4 flex items-center max-w-sm">
           {isProcessing ? (
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          ) : error ? (
-            <X className="mr-2" size={18} />
+            <div className="animate-spin mr-3 h-5 w-5 text-orange-500">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+          ) : toastMessage.includes('success') ? (
+            <Check className="text-green-500 mr-3" size={20} />
           ) : (
-            <Check className="mr-2" size={18} />
+            <X className="text-red-500 mr-3" size={20} />
           )}
-          <span>{toastMessage}</span>
-          <button 
-            onClick={() => setShowToast(false)}
-            className="ml-3 text-white hover:text-gray-200"
-          >
-            <X size={16} />
-          </button>
+          <p className="text-sm">{toastMessage}</p>
         </div>
-      )} */}
-      
+      )}
+       */}
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
@@ -219,6 +218,8 @@ const PaymentPage = () => {
               <h2 className="text-xl font-semibold text-white">Order Summary</h2>
             </div>
             <div className="p-6">
+              
+              
               {cartItems.length === 0 ? (
                 <p className="text-center text-gray-500 py-4">No items in cart.</p>
               ) : (
@@ -231,7 +232,7 @@ const PaymentPage = () => {
                             <img src={item.image} alt={item.name} className="w-12 h-12 rounded-md mr-4 object-cover" />
                           )}
                           <div>
-                            <p className="font-medium text-gray-800">{item.name}</p>
+                            <p className="font-medium text-gray-800">{item.itemName || item.name}</p>
                             <p className="text-gray-500">Qty: {item.quantity}</p>
                           </div>
                         </div>
@@ -349,7 +350,7 @@ const PaymentPage = () => {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Processing you Order...
+                        Processing your Order...
                       </>
                     ) : (
                       `Pay $${totalPrice.toFixed(2)}`
