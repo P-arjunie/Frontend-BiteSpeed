@@ -147,6 +147,12 @@ const PaymentPage = () => {
             <button className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition font-medium">
               Return to Home
             </button>
+            <br/><br/>
+          </Link>
+          <Link to="/customer-order_tracking">
+            <button className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition font-medium">
+              Customer Order Tracking
+            </button>
           </Link>
         </div>
       </div>
