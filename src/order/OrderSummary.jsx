@@ -85,21 +85,27 @@ const OrderSummary = () => {
       driverName: "",
       status: "Pending"
     };
-
+  
     try {
       const res = await axios.post("https://ordermanagementservice.onrender.com/api/orders/", orderData);
+      
       if (res.status === 200 || res.status === 201) {
-       toast.success("Proceed Your Payment!", {
-    position: "top-right",
-    autoClose: 3000,
-    theme: "colored",
-  });
-        // Pass the total price to the payment page
-        navigate('/payment', { 
-          state: { 
+        // Extract the order ID from the response
+        const orderId = res.data._id; // Assuming the response contains the order object with _id
+        
+        toast.success("Proceed Your Payment!", {
+          position: "top-right",
+          autoClose: 3000,
+          theme: "colored",
+        });
+        
+        // Pass the order ID along with the other data to the payment page
+        navigate('/payment', {
+          state: {
             totalPrice: total,
-            cartItems: [cartItem] // Pass the cart item as well
-          } 
+            cartItems: [cartItem],
+            orderId: orderId // Pass the order ID from the database
+          }
         });
       }
     } catch (err) {
